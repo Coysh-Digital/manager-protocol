@@ -1,0 +1,36 @@
+{
+    "schema_version": "updates.v1",
+    "checked_at": 1785340000,
+    "craft": {
+        "current": "5.6.2",
+        "latest": "5.6.4",
+        "update_available": true,
+        "releases_behind": 2,
+        "security_release_available": true,
+        "latest_is_breaking": false
+    },
+    "plugins": [
+        {
+            "handle": "formie",
+            "name": "Formie",
+            "current": "3.0.11",
+            "latest": "3.0.14",
+            "update_available": true,
+            "releases_behind": 3,
+            "security_release_available": false,
+            "abandoned": false
+        },
+        {
+            "handle": "manager-connector",
+            "name": "Manager Connector",
+            "current": "1.0.0",
+            "latest": "1.0.0",
+            "update_available": false
+        }
+    ],
+    "php": {
+        "current": "8.3.14",
+        "security_support_until": "2027-12-31",
+        "end_of_life": false
+    }
+}

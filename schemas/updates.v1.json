@@ -1,0 +1,71 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/updates.v1.json",
+    "title": "updates.v1",
+    "description": "Update availability, as computed on the site. An allowlist: anything absent is rejected, not ignored. Note what is not here — no release notes, no changelog bodies, no download URLs. The platform needs to know that an update exists and whether it is a security release; it does not need the contents.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "checked_at", "craft", "plugins"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["updates.v1"]
+        },
+        "checked_at": {
+            "description": "Unix timestamp of the check itself, which may be well before the report is sent.",
+            "type": "integer"
+        },
+        "craft": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["current", "latest", "update_available"],
+            "properties": {
+                "current": { "type": "string", "maxLength": 32 },
+                "latest": { "type": "string", "maxLength": 32 },
+                "update_available": { "type": "boolean" },
+
+                "releases_behind": { "type": "integer", "minimum": 0 },
+
+                "security_release_available": {
+                    "description": "Whether any release between current and latest is flagged critical. This is the field that decides whether a site is urgent.",
+                    "type": "boolean"
+                },
+
+                "latest_is_breaking": { "type": "boolean" }
+            }
+        },
+        "plugins": {
+            "type": "array",
+            "maxItems": 250,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["handle", "current", "update_available"],
+                "properties": {
+                    "handle": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$" },
+                    "name": { "type": "string", "maxLength": 191 },
+                    "current": { "type": "string", "maxLength": 32 },
+                    "latest": { "type": "string", "maxLength": 32 },
+                    "update_available": { "type": "boolean" },
+                    "releases_behind": { "type": "integer", "minimum": 0 },
+                    "security_release_available": { "type": "boolean" },
+                    "latest_is_breaking": { "type": "boolean" },
+                    "abandoned": {
+                        "description": "Composer's abandoned flag. Worth surfacing: an abandoned plugin will never receive a security fix.",
+                        "type": "boolean"
+                    }
+                }
+            }
+        },
+        "php": {
+            "description": "Whether the runtime itself is still supported. Counts and versions only.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "current": { "type": "string", "maxLength": 32 },
+                "security_support_until": { "type": "string", "maxLength": 32 },
+                "end_of_life": { "type": "boolean" }
+            }
+        }
+    }
+}
