@@ -1,0 +1,45 @@
+{
+    "platform_keypair": {
+        "seed_note": "derived from a fixed seed; test data only, never a real key",
+        "public": "wtTQtctkVi1Kxeol29zmBxJZiTP35EF6A51LAb12sRs=",
+        "secret": "bWFuYWdlci1wcm90b2NvbC10ZXN0LXNlZWQwMDAwMDDC1NC1y2RWLUrF6iXb3OYHElmJM/fkQXoDnUsBvXaxGw=="
+    },
+    "request": {
+        "site_id": "01JRZX9K2Q4M8N7P6T5V3W2Y1B",
+        "connector_version": "1.0.0",
+        "timestamp": 1785340000,
+        "nonce": "Zm9vYmFyYmF6cXV4MTIzNA",
+        "method": "POST",
+        "path": "/api/connector/v1/inventory",
+        "body": "{\"schema_version\":\"inventory.v1\"}",
+        "body_sha256": "c9229b60a222139eb828d7b5c30af7cc7a26f9528b80a7726d67b32cc2f47475",
+        "canonical_string": "MGR1\n01JRZX9K2Q4M8N7P6T5V3W2Y1B\n1.0.0\n1785340000\nZm9vYmFyYmF6cXV4MTIzNA\nPOST\n/api/connector/v1/inventory\nc9229b60a222139eb828d7b5c30af7cc7a26f9528b80a7726d67b32cc2f47475",
+        "signature": "aS+LLskhPPUYoa1/YNrONyibUJP7CXz7MOfloHurVZKORazwAfuQdg+YJH7NTmLf8aYYix2YxIyhLDv6Ls6QDg=="
+    },
+    "response": {
+        "status": 200,
+        "body": "{\"ok\":true}",
+        "canonical_string": "MGR1-RESPONSE\n01JRZX9K2Q4M8N7P6T5V3W2Y1B\nZm9vYmFyYmF6cXV4MTIzNA\n200\n4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
+        "signature": "6OU9FBwX4E4lxu/O27syw+Yg2sJ8ZYSPb2KaWMfnhOjjodkKyLyYW6wWzZFixnsjUkZ4WANEAzXatRBarQ4DCQ=="
+    },
+    "canonical_path_cases": [
+        {
+            "path": "/api/connector/v1/inventory",
+            "query": [],
+            "expected": "/api/connector/v1/inventory"
+        },
+        {
+            "path": "api/connector/v1/heartbeat",
+            "query": [],
+            "expected": "/api/connector/v1/heartbeat"
+        },
+        {
+            "path": "/api/connector/v1/jobs",
+            "query": {
+                "b": "2",
+                "a": "1"
+            },
+            "expected": "/api/connector/v1/jobs?a=1&b=2"
+        }
+    ]
+}

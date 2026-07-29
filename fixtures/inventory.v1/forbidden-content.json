@@ -1,0 +1,24 @@
+{
+    "schema_version": "inventory.v1",
+    "collected_at": 1785340000,
+    "connector": { "version": "1.0.0" },
+    "craft": { "version": "5.10.8.1", "edition": "pro" },
+    "php": { "version": "8.3.14" },
+    "database": {
+        "engine": "mysql",
+        "version": "8.0.36",
+        "password": "hunter2",
+        "host": "db.internal"
+    },
+    "environment": "production",
+    "entries": [
+        { "id": 42, "title": "Draft announcement", "body": "Not yet public." }
+    ],
+    "users": [
+        { "email": "admin@example.org", "passwordHash": "$2y$13$abcdefghijklmnopqrstuv" }
+    ],
+    "env": {
+        "CRAFT_SECURITY_KEY": "should never be transmitted",
+        "DB_PASSWORD": "should never be transmitted"
+    }
+}

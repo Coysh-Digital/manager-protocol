@@ -1,0 +1,52 @@
+{
+    "schema_version": "inventory.v1",
+    "collected_at": 1785340000,
+    "connector": {
+        "version": "1.0.0"
+    },
+    "craft": {
+        "version": "5.10.8.1",
+        "edition": "pro",
+        "schema_version": "5.3.0.4"
+    },
+    "php": {
+        "version": "8.3.14"
+    },
+    "database": {
+        "engine": "mysql",
+        "version": "8.0.36"
+    },
+    "plugins": [
+        { "handle": "manager-connector", "version": "1.0.0", "enabled": true },
+        { "handle": "webhook-notifier", "version": "1.6.0", "enabled": true },
+        { "handle": "formie", "version": "3.0.11", "enabled": false }
+    ],
+    "composer_packages": [
+        { "name": "craftcms/cms", "version": "5.10.8.1" },
+        { "name": "coysh-digital/craft-manager-connector", "version": "1.0.0" },
+        { "name": "vlucas/phpdotenv", "version": "5.6.1" }
+    ],
+    "config_flags": {
+        "dev_mode": false,
+        "allow_admin_changes": false,
+        "allow_updates": false,
+        "headless_mode": false,
+        "https_enforced": true
+    },
+    "queue": {
+        "pending": 2,
+        "reserved": 0,
+        "failed": 0
+    },
+    "migrations": {
+        "pending": 0,
+        "applied": 184
+    },
+    "licence": {
+        "craft": "valid",
+        "plugins_valid": 6,
+        "plugins_total": 6,
+        "trials_in_use": 0
+    },
+    "environment": "production"
+}

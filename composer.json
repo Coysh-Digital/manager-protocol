@@ -1,0 +1,53 @@
+{
+    "name": "coysh-digital/manager-protocol",
+    "description": "Wire contract shared by the Manager platform and the Manager Connector for Craft CMS.",
+    "type": "library",
+    "license": "proprietary",
+    "keywords": [
+        "manager",
+        "protocol",
+        "ed25519",
+        "craftcms"
+    ],
+    "support": {
+        "email": "security@coysh.digital",
+        "source": "https://github.com/Coysh-Digital/manager-protocol"
+    },
+    "authors": [
+        {
+            "name": "Coysh Digital",
+            "homepage": "https://coysh.digital"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*",
+        "ext-sodium": "*"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "coyshdigital\\managerprotocol\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "coyshdigital\\managerprotocol\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "phpstan": "phpstan analyse --memory-limit=1G"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

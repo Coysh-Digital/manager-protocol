@@ -1,0 +1,145 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/inventory.v1.json",
+    "title": "inventory.v1",
+    "description": "Operational metadata a connector may report. This is an allowlist: anything absent is rejected, not ignored. Every field here is justified in the platform's docs/security.md.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "schema_version",
+        "collected_at",
+        "connector",
+        "craft",
+        "php",
+        "database",
+        "environment"
+    ],
+    "properties": {
+        "schema_version": {
+            "description": "Pins the payload to this document. Adding a field means a new version.",
+            "type": "string",
+            "enum": ["inventory.v1"]
+        },
+        "collected_at": {
+            "description": "Unix timestamp at which the connector gathered this data.",
+            "type": "integer"
+        },
+        "connector": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["version"],
+            "properties": {
+                "version": { "type": "string", "maxLength": 32 }
+            }
+        },
+        "craft": {
+            "description": "Needed to tell whether the installation is patched.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["version", "edition"],
+            "properties": {
+                "version": { "type": "string", "maxLength": 32 },
+                "edition": { "type": "string", "enum": ["solo", "team", "pro"] },
+                "schema_version": { "type": "string", "maxLength": 32 }
+            }
+        },
+        "php": {
+            "description": "Needed to flag installations on an unsupported runtime.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["version"],
+            "properties": {
+                "version": { "type": "string", "maxLength": 32 }
+            }
+        },
+        "database": {
+            "description": "Engine and version only. No host, no credentials, no schema.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["engine", "version"],
+            "properties": {
+                "engine": { "type": "string", "enum": ["mysql", "mariadb", "pgsql"] },
+                "version": { "type": "string", "maxLength": 32 }
+            }
+        },
+        "plugins": {
+            "description": "Handles and versions, so plugin updates and advisories can be matched.",
+            "type": "array",
+            "maxItems": 250,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["handle", "version", "enabled"],
+                "properties": {
+                    "handle": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$" },
+                    "version": { "type": "string", "maxLength": 32 },
+                    "enabled": { "type": "boolean" }
+                }
+            }
+        },
+        "composer_packages": {
+            "description": "Package names and versions, for advisory matching. Never the lock file itself.",
+            "type": "array",
+            "maxItems": 1000,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "version"],
+                "properties": {
+                    "name": { "type": "string", "maxLength": 191, "pattern": "^[A-Za-z0-9._/-]+$" },
+                    "version": { "type": "string", "maxLength": 64 }
+                }
+            }
+        },
+        "config_flags": {
+            "description": "Booleans only. Never configuration values, and never environment variables.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dev_mode": { "type": "boolean" },
+                "allow_admin_changes": { "type": "boolean" },
+                "allow_updates": { "type": "boolean" },
+                "headless_mode": { "type": "boolean" },
+                "https_enforced": { "type": "boolean" }
+            }
+        },
+        "queue": {
+            "description": "Counts only. No job payloads, which would carry site content.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "pending": { "type": "integer", "minimum": 0 },
+                "reserved": { "type": "integer", "minimum": 0 },
+                "failed": { "type": "integer", "minimum": 0 }
+            }
+        },
+        "migrations": {
+            "description": "Counts only, to surface a half-finished deployment.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "pending": { "type": "integer", "minimum": 0 },
+                "applied": { "type": "integer", "minimum": 0 }
+            }
+        },
+        "licence": {
+            "description": "State computed locally by the connector. Licence keys are never transmitted.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "craft": {
+                    "type": "string",
+                    "enum": ["valid", "trial", "invalid", "mismatched", "unknown"]
+                },
+                "plugins_valid": { "type": "integer", "minimum": 0 },
+                "plugins_total": { "type": "integer", "minimum": 0 },
+                "trials_in_use": { "type": "integer", "minimum": 0 }
+            }
+        },
+        "environment": {
+            "description": "Classification only, never the value of any environment variable.",
+            "type": "string",
+            "enum": ["production", "staging", "development", "unknown"]
+        }
+    }
+}
