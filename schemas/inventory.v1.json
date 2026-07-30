@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/inventory.v1.json",
     "title": "inventory.v1",
-    "description": "Operational metadata a connector may report. This is an allowlist: anything absent is rejected, not ignored. Every field here is justified in the platform's docs/security.md.",
+    "description": "Operational metadata a connector may report. This is an allowlist: anything absent is rejected, not ignored. Every field here is justified in the platform's docs/security.md. Sections beyond the required core are each governed by a capability — see InventorySections — so a site sends only what it has been granted, and a shorter report is valid rather than deficient.",
     "type": "object",
     "additionalProperties": false,
     "required": [
