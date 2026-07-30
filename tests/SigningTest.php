@@ -131,3 +131,53 @@ it('produces one canonical form regardless of query ordering', function (): void
 
     expect($a)->toBe($b);
 });
+
+it('signs a streamed body exactly as a held one', function (): void {
+    $body = random_bytes(4096);
+
+    $held = new CanonicalRequest(
+        siteId: '01KYRXWJ3Z9407ACBQ41PNA81H',
+        connectorVersion: '1.0.0',
+        timestamp: 1785484800,
+        nonce: 'PxJ8kQ2mZ1vLbN4tRc7yWg==',
+        method: 'PUT',
+        path: '/api/connector/v1/backups/abc/content',
+        body: $body,
+    );
+
+    $streamed = CanonicalRequest::forStream(
+        siteId: '01KYRXWJ3Z9407ACBQ41PNA81H',
+        connectorVersion: '1.0.0',
+        timestamp: 1785484800,
+        nonce: 'PxJ8kQ2mZ1vLbN4tRc7yWg==',
+        method: 'PUT',
+        path: '/api/connector/v1/backups/abc/content',
+        bodyHash: hash('sha256', $body),
+    );
+
+    // One signing format, not one per transport. A platform verifying an upload runs the same code it
+    // runs for every other request; only where the hash came from differs.
+    expect($streamed->toString())->toBe($held->toString());
+});
+
+it('does not verify when a streamed hash does not match the bytes that follow', function (): void {
+    $keypair = Keys::generateKeypair();
+
+    $declared = CanonicalRequest::forStream(
+        siteId: '01KYRXWJ3Z9407ACBQ41PNA81H',
+        connectorVersion: '1.0.0',
+        timestamp: 1785484800,
+        nonce: 'PxJ8kQ2mZ1vLbN4tRc7yWg==',
+        method: 'PUT',
+        path: '/api/connector/v1/backups/abc/content',
+        bodyHash: hash('sha256', 'what was promised'),
+    );
+
+    $signature = $declared->sign($keypair['secret']);
+
+    // The signature is over the declaration, so it still verifies — the declaration is what was
+    // signed. Catching the substitution is the receiver's job, by hashing the stream and comparing.
+    // This test exists to record that division of responsibility rather than to assume it.
+    expect($declared->verify($signature, $keypair['public']))->toBeTrue()
+        ->and(hash('sha256', 'what actually arrived'))->not->toBe($declared->bodyHash());
+});

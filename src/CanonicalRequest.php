@@ -28,7 +28,44 @@ final class CanonicalRequest
         public readonly string $method,
         public readonly string $path,
         public readonly string $body,
+
+        /**
+         * A body hash declared instead of computed, for a body too large to hold.
+         *
+         * An artifact upload cannot be hashed after the fact and then judged: by then it has already
+         * been read. So the sender declares the hash, the signature covers the declaration, and the
+         * receiver authenticates before reading a byte — then compares the stream against a promise
+         * made before it started.
+         */
+        public readonly ?string $declaredBodyHash = null,
     ) {
+    }
+
+    /**
+     * A request whose body is streamed rather than held.
+     *
+     * Produces the same canonical string a buffered request with identical content would, which is the
+     * property that matters: there is one signing format, not one per transport.
+     */
+    public static function forStream(
+        string $siteId,
+        string $connectorVersion,
+        int $timestamp,
+        string $nonce,
+        string $method,
+        string $path,
+        string $bodyHash,
+    ): self {
+        return new self(
+            siteId: $siteId,
+            connectorVersion: $connectorVersion,
+            timestamp: $timestamp,
+            nonce: $nonce,
+            method: $method,
+            path: $path,
+            body: '',
+            declaredBodyHash: $bodyHash,
+        );
     }
 
     /**
@@ -39,7 +76,7 @@ final class CanonicalRequest
      */
     public function bodyHash(): string
     {
-        return hash('sha256', $this->body);
+        return $this->declaredBodyHash ?? hash('sha256', $this->body);
     }
 
     /**
