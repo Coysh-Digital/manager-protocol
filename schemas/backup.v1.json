@@ -1,0 +1,92 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/backup.v1.json",
+    "title": "backup.v1",
+    "description": "What a connector declares about an artifact before it uploads the bytes. Metadata only: this describes a backup, it never contains one. Note what is absent — no database credentials, no connection details, no table names, no row counts, no file paths and no sample of the contents. The platform needs to be able to store the artifact, verify it arrived intact and eventually decrypt it; none of that requires knowing anything about the data inside.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "job_id", "artifact"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["backup.v1"]
+        },
+        "job_id": {
+            "description": "The backup.create job this artifact belongs to. Declaring twice for the same job returns the first artifact rather than creating a second, which is how a retry stays harmless.",
+            "type": "string",
+            "minLength": 26,
+            "maxLength": 40
+        },
+        "artifact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "scheme",
+                "header",
+                "sealed_key",
+                "ciphertext_sha256",
+                "plaintext_sha256",
+                "ciphertext_bytes",
+                "plaintext_bytes",
+                "chunk_bytes",
+                "taken_at"
+            ],
+            "properties": {
+                "scheme": {
+                    "description": "The encryption format. An artifact whose scheme the platform does not implement is refused rather than stored in the hope that a later build understands it.",
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "header": {
+                    "description": "Base64 secret-stream header. Also present at the front of the uploaded bytes; kept here so the platform can detect a mismatch between what was declared and what arrived.",
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "sealed_key": {
+                    "description": "The per-artifact encryption key, sealed to the platform's box public key. Base64. The connector cannot reopen this, which is deliberate: a site compromised next month cannot recover the keys to artifacts it uploaded this month.",
+                    "type": "string",
+                    "maxLength": 256
+                },
+                "ciphertext_sha256": {
+                    "description": "SHA-256 of the bytes about to be uploaded, declared before they are. The signature covers this, so the platform can authenticate the claim before reading a single byte and then reject the stream the moment it diverges.",
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                },
+                "plaintext_sha256": {
+                    "description": "SHA-256 of the backup itself, so whoever eventually decrypts it can confirm they have what was taken. The ciphertext hash cannot tell them that.",
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                },
+                "ciphertext_bytes": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "plaintext_bytes": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "chunk_bytes": {
+                    "description": "Plaintext bytes per encrypted chunk. Recorded because a reader has to frame the stream the way the writer did.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "taken_at": {
+                    "description": "Unix timestamp of the dump, which may be meaningfully earlier than the upload on a large site.",
+                    "type": "integer"
+                },
+                "engine": {
+                    "description": "Which database produced it, so an operator knows what will read it back. A name, not a connection.",
+                    "type": "string",
+                    "enum": ["mysql", "mariadb", "postgresql"]
+                },
+                "engine_version": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "compressed": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

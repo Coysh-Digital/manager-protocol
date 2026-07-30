@@ -18,11 +18,15 @@ it('offers no job type that could execute something arbitrary', function (): voi
 });
 
 it('keeps the available set to what is actually implemented', function (): void {
-    // backup.create is reserved so both sides agree on the spelling, but not available: the
-    // specification holds the backup pipeline until its threat model and recovery flow are designed.
-    expect(Jobs::available())->toBe(['inventory.refresh', 'updates.check'])
-        ->and(Jobs::reserved())->toContain('backup.create')
-        ->and(Jobs::isAvailable('backup.create'))->toBeFalse();
+    expect(Jobs::available())->toBe(['inventory.refresh', 'updates.check', 'backup.create'])
+        ->and(Jobs::reserved())->toBe(Jobs::available());
+});
+
+it('carries no destination on the backup job', function (): void {
+    // The reason this job takes no parameters at all. A parameter naming somewhere to upload to would
+    // let a compromised platform tell a site to send its entire database elsewhere; the connector
+    // instead uploads to the platform it is already paired with, at an address no payload can change.
+    expect(Jobs::BACKUP_CREATE)->toBe('backup.create');
 });
 
 it('rejects anything not in the set', function (string $type): void {

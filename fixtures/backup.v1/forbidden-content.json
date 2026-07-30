@@ -1,0 +1,22 @@
+{
+    "schema_version": "backup.v1",
+    "job_id": "01KYRXWJ3Z9407ACBQ41PNA81H",
+    "artifact": {
+        "scheme": "xchacha20poly1305-secretstream-v1",
+        "header": "9Fk3wQzXcVbNmAsDfGhJkLpOiUyTrEwQ",
+        "sealed_key": "aGVsbG8gdGhpcyBpcyBub3QgYSByZWFsIHNlYWxlZCBrZXkgYnV0IGl0IGlzIGJhc2U2NA==",
+        "ciphertext_sha256": "9f2c1b3a4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8",
+        "plaintext_sha256": "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809",
+        "ciphertext_bytes": 18874368,
+        "plaintext_bytes": 18857984,
+        "chunk_bytes": 1048576,
+        "taken_at": 1785484800,
+
+        "database_password": "hunter2",
+        "dsn": "mysql:host=127.0.0.1;dbname=craft",
+        "local_path": "/var/www/storage/backups/craft--2026-07-30.sql.gz",
+        "tables": ["users", "entries", "sessions"],
+        "sample_rows": [{ "email": "someone@example.org" }],
+        "admin_email": "admin@example.org"
+    }
+}

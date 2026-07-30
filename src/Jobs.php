@@ -35,12 +35,19 @@ final class Jobs
     public const UPDATES_CHECK = 'updates.check';
 
     /**
-     * Take and verify a database backup.
+     * Take a database backup, encrypt it locally and upload it to the platform.
      *
-     * Declared so both sides agree on the spelling before it is implemented. It is **not** in
-     * {@see self::available()}: the specification is explicit that restore, and by extension the
-     * backup pipeline it belongs to, waits until its threat model, confirmation flow and failure
-     * recovery have been designed and tested.
+     * Takes no parameters. That is not an oversight and it is worth understanding why, because the
+     * obvious design is to hand the connector somewhere to upload to.
+     *
+     * A parameter naming a destination would mean a platform — or anyone who had compromised one —
+     * could tell a site to send its entire database somewhere else. The connector instead uploads to
+     * the platform it is already paired with, over a signed request, to an address it holds locally
+     * and that no payload can change. There is nothing in the job for a forged instruction to occupy.
+     *
+     * Restore is a separate matter and remains unbuilt: the specification requires its threat model,
+     * confirmation flow and failure recovery to be designed and tested first, and none of that is
+     * implied by being able to take a backup.
      */
     public const BACKUP_CREATE = 'backup.create';
 
@@ -54,6 +61,7 @@ final class Jobs
         return [
             self::INVENTORY_REFRESH,
             self::UPDATES_CHECK,
+            self::BACKUP_CREATE,
         ];
     }
 
