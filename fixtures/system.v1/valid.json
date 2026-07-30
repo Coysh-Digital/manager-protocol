@@ -1,0 +1,35 @@
+{
+    "schema_version": "system.v1",
+    "collected_at": 1785400000,
+    "storage": {
+        "volumes": [
+            { "handle": "images", "bytes": 4294967296, "files": 18402, "measured": true },
+            { "handle": "documents", "bytes": 214748364, "files": 903, "measured": true },
+            { "handle": "archive", "bytes": 0, "measured": false }
+        ],
+        "storage_bytes": 1073741824,
+        "disk_free_bytes": 21474836480,
+        "disk_total_bytes": 107374182400
+    },
+    "php": {
+        "version": "8.3.14",
+        "sapi": "fpm-fcgi",
+        "memory_limit_bytes": 268435456,
+        "max_execution_time": 120,
+        "upload_max_filesize_bytes": 67108864,
+        "post_max_size_bytes": 67108864,
+        "max_input_vars": 1000,
+        "opcache_enabled": true,
+        "opcache_memory_used_bytes": 94371840,
+        "opcache_memory_free_bytes": 39845888,
+        "extensions": 47
+    },
+    "response": {
+        "samples": 200,
+        "window_hours": 6,
+        "mean_ms": 84.3,
+        "p50_ms": 61.0,
+        "p95_ms": 212.4,
+        "max_ms": 1180.9
+    }
+}

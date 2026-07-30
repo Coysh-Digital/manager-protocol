@@ -194,3 +194,42 @@ it('rejects a malformed box public key', function (string $value): void {
     'wrong length' => 'c2hvcnQ=',
     'empty' => '',
 ]);
+
+it('refuses a public key that would produce a box anybody could open', function (string $hex, string $why): void {
+    $key = base64_encode((string) hex2bin($hex));
+
+    // Small-order Curve25519 points. Sealing to one produces a shared secret an attacker can predict,
+    // so the box is readable by anyone who finds it.
+    //
+    // This is not the control that prevents the attack — libsodium already refuses, which the second
+    // expectation asserts rather than assumes. What this buys is *when*: a recovery key entered by hand
+    // is refused next to the field it was typed into, instead of at three in the morning on the night a
+    // site has already dumped its database to disk and cannot seal the artifact key.
+    expect(Sealing::isUsableBoxPublicKey($key))->toBeFalse($why)
+        ->and(Sealing::isValidBoxPublicKey($key))->toBeTrue('shape alone cannot catch this');
+
+    expect(fn (): string => Sealing::seal('a key', $key))->toThrow(SodiumException::class);
+})->with([
+    'the identity' => ['0000000000000000000000000000000000000000000000000000000000000000', 'all zero'],
+    'order one' => ['0100000000000000000000000000000000000000000000000000000000000000', 'one'],
+    'order eight' => ['e0eb7a7c3b41b8ae1656e3faf19fc46ada098deb9c32b1fd866205165f49b800', 'order 8'],
+    'order eight, the other one' => ['5f9c95bca3508c24b1d0b1559c83ef5b04445cc4581c8e86d8224eddd09f1157', 'order 8'],
+    'p minus one' => ['ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'p-1'],
+    'p' => ['edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'p'],
+    'p plus one' => ['eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'p+1'],
+]);
+
+it('accepts a key that was actually generated', function (): void {
+    for ($i = 0; $i < 50; $i++) {
+        expect(Sealing::isUsableBoxPublicKey(Sealing::generateBoxKeypair()['public']))->toBeTrue();
+    }
+});
+
+it('treats a malformed key as unusable rather than raising', function (string $value): void {
+    expect(Sealing::isUsableBoxPublicKey($value))->toBeFalse();
+})->with([
+    'not base64' => 'not base64 at all!',
+    'wrong length' => 'c2hvcnQ=',
+    'empty' => '',
+    'an Ed25519 secret key' => 'bWFuYWdlci1wcm90b2NvbC10ZXN0LXNlZWQwMDAwMDDC1NC1y2RWLUrF6iXb3OYHElmJM/fkQXoDnUsBvXaxGw==',
+]);

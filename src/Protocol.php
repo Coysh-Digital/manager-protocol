@@ -22,7 +22,7 @@ final class Protocol
     /**
      * @var string Package version. Independent of the platform and connector versions.
      */
-    public const VERSION = '1.0.1';
+    public const VERSION = '1.2.0';
 
     /**
      * @var string Prefix on the canonical string a connector signs.
@@ -67,6 +67,46 @@ final class Protocol
      * use the same size the writer did. Small enough that neither side ever holds much in memory.
      */
     public const ARTIFACT_CHUNK_BYTES = 1048576;
+
+    /**
+     * @var string Artifacts whose key was sealed to the platform. The platform can read these.
+     *
+     * Kept because artifacts written under it still exist and must stay readable. Nothing writes one
+     * any more.
+     */
+    public const BACKUP_FORMAT_V1 = 'v1';
+
+    /**
+     * @var string Artifacts whose key was sealed only to an organisation's recovery keys.
+     *
+     * The platform stores these, verifies them, serves them and deletes them, and cannot open them.
+     */
+    public const BACKUP_FORMAT_V2 = 'v2';
+
+    /**
+     * @var string Oldest connector able to produce a v2 artifact.
+     *
+     * Served on the signed claim response so a platform can explain, on the site's own screen, why a
+     * backup is not happening. It is **not** a security control: the version a connector reports is
+     * something it asserts about itself, and a connector that lied would only cause itself to be sent
+     * recipients it then has to actually seal to.
+     */
+    public const MIN_CONNECTOR_VERSION_FOR_V2 = '1.7.0';
+
+    /**
+     * @var int Largest artifact manifest, in bytes. See {@see ArtifactEnvelope::MAX_MANIFEST_BYTES}.
+     */
+    public const MAX_BACKUP_MANIFEST_BYTES = 65536;
+
+    /**
+     * @var int Most recovery keys one artifact may be sealed to.
+     *
+     * Every recipient is another copy of the key that opens the backup, so this is bounded rather than
+     * open. Eight is enough for an organisation keeping a working key, a spare in a safe, and one per
+     * person who might have to do a restore at three in the morning, without turning a manifest into a
+     * keyring.
+     */
+    public const MAX_BACKUP_RECIPIENTS = 8;
 
     /**
      * @var int Raw entropy in a request nonce, in bytes.
@@ -143,6 +183,16 @@ final class Protocol
             'licences:read',
             'security:read',
             'system:read',
+
+            // Disk usage, PHP limits and sampled response timings. Deliberately not folded into
+            // `system:read`: measuring disk means walking a directory tree and timing responses
+            // means observing traffic, and widening an existing grant to cover them would make sites
+            // start doing both without anybody deciding to.
+            'runtime:read',
+
+            // Counts of failed control-panel sign-ins. Never usernames, never addresses.
+            'logins:read',
+
             'backups:create',
         ];
     }
@@ -163,6 +213,8 @@ final class Protocol
             'licences:read',
             'security:read',
             'system:read',
+            'runtime:read',
+            'logins:read',
         ];
     }
 

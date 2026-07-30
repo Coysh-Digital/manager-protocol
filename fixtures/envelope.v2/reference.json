@@ -1,0 +1,24 @@
+{
+    "note": "Test data only. Every key here is derived from a printable fixed seed and must never be used anywhere real; they are committed so that anybody can reproduce artifact.bin.",
+    "keys": {
+        "recovery_a": {
+            "public": "ZIhGH5+agPb4dwkmKfHGe87cqV4yjNtWRowkmEdTXmE=",
+            "secret": "FvwFeVcXHAnl9qjefo59QtXj7dfr2cB3+DpTGLKdllo="
+        },
+        "recovery_b": {
+            "public": "8oTYoI3ySHDC+8FuHsE3diSCrJQjJOTCwawuxUFXlXo=",
+            "secret": "ZeEE1/qeJPN2iNgJmLOClgnLvLkNbzqI7z4nThzjY/Y="
+        },
+        "site": {
+            "public": "9UXiuM33oKBKVqRbLP1H8zhZr3tCb/jYGbCya8tHZyk=",
+            "secret": "bWFuYWdlci1zaXRlLWZpeHR1cmUta2V5MDAwMDAwMDD1ReK4zfegoEpWpFss/UfzOFmve0Jv+NgZsLJry0dnKQ=="
+        }
+    },
+    "artifact_key": "bWFuYWdlci1hcnRpZmFjdC1maXh0dXJlLWtleTAwMDA=",
+    "plaintext": "-- manager-protocol fixture dump\nCREATE TABLE fixture (id INT);\nINSERT INTO fixture VALUES (1);\n",
+    "manifest_sha256": "7809dede8ba3713a36ca4b184238e509299b4a0a955d5ddb95a3bcf797c400dd",
+    "manifest_signature": "6vz1oKem5s2y+sjliOmXEVXE/6cTLyyXQr4gnINSZdyJKmIVz14LHaw02URxQJg95hH4EejorPfEhT+HmHNSBg==",
+    "body_offset": 1755,
+    "artifact_sha256": "a5a97fc1c3bc9ff6f2c4249b6dd9c42924ea432f40c7d8f5b7046d77dd10f722",
+    "artifact_bytes": 1892
+}

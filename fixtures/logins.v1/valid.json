@@ -1,0 +1,10 @@
+{
+    "schema_version": "logins.v1",
+    "collected_at": 1785400000,
+    "window_hours": 24,
+    "failed_attempts": 214,
+    "accounts_with_failures": 6,
+    "accounts_locked": 2,
+    "admin_accounts_affected": 1,
+    "last_failure_at": 1785399820
+}

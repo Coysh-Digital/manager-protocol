@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace coyshdigital\managerprotocol;
 
 use SensitiveParameter;
+use SodiumException;
 
 /**
  * Anonymous sealed boxes, for handing a key to the platform without a shared secret.
@@ -113,6 +114,9 @@ final class Sealing
 
     /**
      * Whether a string is a well-formed base64 X25519 public key.
+     *
+     * Shape only, and that is nearly all "well formed" can mean here: any 32 bytes is a syntactically
+     * valid X25519 public key. See {@see self::isUsableBoxPublicKey()} for the stronger question.
      */
     public static function isValidBoxPublicKey(string $publicKeyBase64): bool
     {
@@ -123,6 +127,54 @@ final class Sealing
         }
 
         return true;
+    }
+
+    /**
+     * Whether a public key is one this package could actually seal to.
+     *
+     * Well-formedness is a weak test, so this adds the one further check available: that the key is not
+     * a small-order point. Sealing to such a key produces a box anybody can open, because the ephemeral
+     * key agreement yields a shared secret an attacker can predict.
+     *
+     * **This is not the control that prevents that attack.** libsodium already refuses — `crypto_box_seal`
+     * on a small-order key throws, because `crypto_scalarmult` returns an error rather than a usable
+     * secret. What this method buys is *when* the refusal happens. Without it, a recovery key entered
+     * by hand looks fine until the night a site has already dumped its database to disk and is trying
+     * to seal the artifact key, at which point the job fails somewhere unhelpful. With it, the key is
+     * refused at enrolment, next to the field it was typed into.
+     *
+     * The probe is a scalar multiplication with a throwaway secret. Both outcomes are treated as
+     * rejection: libsodium raises `SodiumException` on the canonical small-order points, and the
+     * all-zero comparison covers a build that returned the degenerate result instead of erroring.
+     *
+     * A caveat worth stating rather than leaving to be discovered: the widely circulated list of
+     * "twelve small-order points" includes five non-canonical encodings with the high bit set. RFC 7748
+     * requires that bit to be masked, so those reduce to ordinary field elements and are neither
+     * refused here nor dangerous. The seven canonical ones are what matters and are all rejected.
+     */
+    public static function isUsableBoxPublicKey(string $publicKeyBase64): bool
+    {
+        try {
+            $public = self::decode($publicKeyBase64, self::BOX_PUBLIC_KEY_BYTES, 'box public key');
+        } catch (ProtocolException) {
+            return false;
+        }
+
+        $probe = sodium_crypto_box_secretkey(sodium_crypto_box_keypair());
+
+        try {
+            $shared = sodium_crypto_scalarmult($probe, $public);
+        } catch (SodiumException) {
+            return false;
+        } finally {
+            sodium_memzero($probe);
+        }
+
+        $degenerate = hash_equals(str_repeat("\0", self::BOX_PUBLIC_KEY_BYTES), $shared);
+
+        sodium_memzero($shared);
+
+        return ! $degenerate;
     }
 
     /**

@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/backup-progress.v1.json",
+    "title": "backup-progress.v1",
+    "description": "A connector saying which stage of a backup it has reached. Deliberately almost empty. The temptation with a progress report is to attach what is being worked on — a file, a size, a table count — and every one of those would be a description of the site's data travelling under a heading that looks harmless. This carries a job identifier, a stage name from a closed list, and a timestamp. A stage is a claim about the site's own state, not a fact the platform can verify, and nothing decides anything on it.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "job_id", "stage", "at"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["backup-progress.v1"]
+        },
+        "job_id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}\\z"
+        },
+        "stage": {
+            "description": "Enumerated so the set cannot grow by accident. Only 'dump' is sent today: it is the longest phase and the only one where the information is not derivable from a later report. The other two are reserved so a connector can begin sending them without a platform change.",
+            "type": "string",
+            "enum": ["dump", "encrypt", "upload"]
+        },
+        "at": {
+            "description": "Unix timestamp on the site's clock. Recorded alongside the platform's own, and ordered by the platform's, so a site with a wrong clock cannot reorder a timeline.",
+            "type": "integer",
+            "minimum": 1704067200,
+            "maximum": 4102444800
+        }
+    }
+}

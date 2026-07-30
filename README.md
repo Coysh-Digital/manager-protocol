@@ -6,10 +6,16 @@ This package is deliberately tiny and has **no runtime dependencies** beyond PHP
 `json` extensions. It runs inside privileged plugin code on customer sites, so anything it pulls in
 would have to be reviewed to the same standard as the connector itself.
 
-It exists as a separate package because the contract is shared between a public repository and a
-private one. Vendoring copies into both guarantees they drift, and drift in a signing protocol is a
-security event. Keeping it here means a protocol change is a version bump and two dependent pull
-requests.
+It exists as a separate package because the contract is shared by two repositories under different
+licences: the [control plane](https://github.com/Coysh-Digital/manager) is AGPL-3.0 and the
+[Craft connector](https://github.com/Coysh-Digital/craft-manager-connector) is MIT. Vendoring copies
+into both guarantees they drift, and drift in a signing protocol is a security event. Keeping it here
+means a protocol change is a version bump and two dependent pull requests: deliberate friction, in the
+one place where surprises are least welcome.
+
+It is MIT, which is the most permissive of the three deliberately. This is the specification of how a
+site proves its identity to a control plane, and anyone should be able to read, verify or reimplement
+it without asking us, including to point the connector at something else entirely.
 
 ## What is in the box
 
@@ -21,6 +27,13 @@ requests.
 | `Keys` | Ed25519 keypair generation, signing and verification over libsodium |
 | `Nonce` | Request nonces and single-use enrolment codes, plus their validation and hashing |
 | `SchemaValidator` | Strict allowlist validation of connector payloads |
+| `Sealing` | X25519 sealed boxes: handing a key to a recipient without a shared secret |
+| `ArtifactStream` | Chunked authenticated encryption for backups, so nothing large is held in memory |
+| `ArtifactEnvelope` | The self-describing header that makes a v2 artifact a file rather than a row |
+| `KeyFingerprint` | Short, human-comparable names for public keys |
+| `RecoveryProof` | The challenge and response that prove somebody holds a recovery private key |
+| `Jobs` | The closed vocabulary of work a platform may ask a site to do |
+| `InventorySections` | Which report sections each capability permits |
 
 ## Request signing
 
@@ -105,6 +118,38 @@ moment it appears. Adding a field is a new schema version, not an edit.
 Validation errors name the offending path and never quote its value, because those strings reach
 logs and a rejected payload may be carrying exactly the key material that should not be there.
 
+Two limits of the validator worth knowing before writing a schema against it, because both have
+already caught somebody out. It implements **no `minLength` and no `minItems`** — `backup.v1.json`
+carries a `"minLength": 26` that has never enforced anything — so express length as an anchored
+`pattern` with an explicit quantifier. And PCRE's `$` matches *before* a trailing newline, so
+`^[0-9a-f]{64}$` accepts `"…\n"`; anchor with `\z`.
+
+## Backup artifacts
+
+A v1 artifact was a bare `ArtifactStream`, with its key sealed to the platform. The platform could read
+every backup it held, and the connector's documentation said so.
+
+A v2 artifact is an `ArtifactEnvelope` wrapped around the same stream, with the key sealed to an
+organisation's own recovery keys and to nothing else. The platform stores, verifies, serves and deletes
+something it cannot open.
+
+```
+MGRBAK | major | minor | len | manifest | len | signature | ArtifactStream …
+```
+
+The manifest carries everything needed to decrypt the file **offline, with a private key and nothing
+else** — that is the whole point, because a file that needs our database to describe itself has not
+achieved zero-knowledge. It is signed by the site's own connector key, so whoever holds the file can
+confirm which site produced it without asking the platform, which matters because the platform is the
+party being checked.
+
+The manifest travels as *bytes* everywhere, never as an object to be re-encoded. `backup.v2` carries it
+base64'd for exactly that reason.
+
+`ArtifactStream` is unchanged between the two formats, deliberately. It has the only genuine
+cross-implementation byte-compatibility test in this package, and the change from v1 to v2 is about who
+can obtain the key, not about how bytes are encrypted.
+
 ## Fixtures
 
 `fixtures/` holds the cross-implementation contract — known inputs with their expected canonical
@@ -126,3 +171,9 @@ composer phpstan     # level 8
 ## Security
 
 Report vulnerabilities privately to hello@coysh.digital. Do not open a public issue.
+
+## Licence
+
+**MIT.** See [LICENSE.md](LICENSE.md).
+
+Requires PHP 8.2+ and the `sodium` and `json` extensions. Nothing else.

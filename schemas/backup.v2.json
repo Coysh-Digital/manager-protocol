@@ -1,0 +1,60 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/backup.v2.json",
+    "title": "backup.v2",
+    "description": "What a connector declares about an artifact before it uploads the bytes. Metadata only: this describes a backup, it never contains one. The difference from backup.v1 is what is missing — there is no key the platform could use. The artifact's encryption key is sealed to the organisation's own recovery keys and to nothing else, so the platform stores, verifies, serves and deletes something it cannot open. The manifest travels as the exact bytes embedded in the artifact file rather than as an object, because the signature is over bytes and re-serialising a decoded object is how a signature stops verifying between two builds that agree about the data and disagree about the whitespace. Note what is absent, as in v1 — no database credentials, no connection details, no table names, no row counts, no file paths and no sample of the contents.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "schema_version",
+        "job_id",
+        "manifest_b64",
+        "manifest_sha256",
+        "manifest_signature",
+        "artifact_sha256",
+        "artifact_bytes"
+    ],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["backup.v2"]
+        },
+        "job_id": {
+            "description": "The backup.create job this artifact belongs to. Declaring twice for the same job returns the first artifact rather than creating a second, which is how a retry stays harmless. Expressed as a pattern rather than a length pair because this validator does not implement minLength — a ULID is exactly 26 Crockford base32 characters, so the pattern says exactly that.",
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}\\z"
+        },
+        "manifest_b64": {
+            "description": "Base64 of the exact manifest bytes embedded in the artifact file. Decoded and validated against backup-manifest.v2 after the signature verifies, never before.",
+            "type": "string",
+            "maxLength": 87384,
+            "pattern": "^[A-Za-z0-9+/]+={0,2}\\z"
+        },
+        "manifest_sha256": {
+            "description": "SHA-256 of the decoded manifest bytes. Redundant against the signature and kept anyway, because it gives the platform something cheap to index and compare without holding any key.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}\\z"
+        },
+        "manifest_signature": {
+            "description": "Base64 Ed25519 signature by this site's connector key, over the manifest signing prefix concatenated with the manifest bytes. Also present inside the artifact file, so whoever holds the file can verify it came from their site without asking the platform anything.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+/]{86}==\\z"
+        },
+        "artifact_sha256": {
+            "description": "SHA-256 of the whole uploaded file — envelope, manifest, signature and encrypted stream. Declared before the bytes are sent and covered by the request signature, so the platform authenticates the claim before reading a byte and rejects the stream the moment it diverges. Distinct from the manifest's ciphertext_sha256, which covers the encrypted stream alone.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}\\z"
+        },
+        "artifact_bytes": {
+            "description": "Size of the whole uploaded file. The floor is the smallest envelope that could exist; the ceiling is the platform's artifact limit.",
+            "type": "integer",
+            "minimum": 128,
+            "maximum": 2147483648
+        },
+        "upload_mode": {
+            "description": "Where the bytes went. 'platform' means the connector streamed them to the platform it paired with; 'direct' means it used a short-lived grant whose host was pinned in local configuration on the site's own server. Reported after the fact, never instructed — nothing the platform sends names a host.",
+            "type": "string",
+            "enum": ["platform", "direct"]
+        }
+    }
+}

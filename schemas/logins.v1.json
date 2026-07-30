@@ -1,0 +1,45 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/logins.v1.json",
+    "title": "logins.v1",
+    "description": "Failed sign-ins to the site's control panel, as counts. An allowlist: anything absent is rejected, not ignored.\n\nNote what is not here, and why. There is no username, no email address, no user id, no source address and no per-attempt record — only totals. A stream of 'who tried to sign in as whom, from where' is a log of real people's behaviour on somebody else's website, and forwarding it to a monitoring platform would be collection this product has no stated purpose for. What an operator needs is whether a site is being attacked and whether anybody is locked out, and both are numbers.\n\nOne caveat travels with these figures and is repeated in the interface: Craft resets a user's failed-attempt counter on a successful sign-in, so a total here is a floor rather than a count of everything that has ever been tried.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "collected_at", "window_hours", "failed_attempts"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["logins.v1"]
+        },
+        "collected_at": {
+            "type": "integer"
+        },
+        "window_hours": {
+            "description": "How far back the counts reach. Bounded, because an unbounded window would make every number monotonic and therefore meaningless.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 720
+        },
+
+        "failed_attempts": {
+            "description": "Sum of outstanding failed-attempt counters across accounts whose last failure falls inside the window.",
+            "type": "integer",
+            "minimum": 0
+        },
+        "accounts_with_failures": { "type": "integer", "minimum": 0 },
+        "accounts_locked": {
+            "description": "Accounts Craft has locked out. The number that most often needs a person, because somebody is currently unable to work.",
+            "type": "integer",
+            "minimum": 0
+        },
+        "admin_accounts_affected": {
+            "description": "How many of the affected accounts are administrators. Count only — never which. Failed attempts against an admin account are a different signal from failed attempts against an author.",
+            "type": "integer",
+            "minimum": 0
+        },
+        "last_failure_at": {
+            "description": "Unix timestamp of the most recent failure, or absent if there has been none in the window.",
+            "type": "integer"
+        }
+    }
+}
