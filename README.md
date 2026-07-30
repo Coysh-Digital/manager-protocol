@@ -125,4 +125,4 @@ composer phpstan     # level 8
 
 ## Security
 
-Report vulnerabilities privately to security@coysh.digital. Do not open a public issue.
+Report vulnerabilities privately to hello@coysh.digital. Do not open a public issue.
