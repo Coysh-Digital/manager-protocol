@@ -3,7 +3,7 @@
     "description": "Wire contract shared by the Manager platform and the Manager Connector for Craft CMS.",
     "version": "1.0.0",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "keywords": [
         "manager",
         "protocol",
