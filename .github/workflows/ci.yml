@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Contract tests
+    runs-on: ubuntu-latest
+
+    # Both dependents declare >=8.2, and the connector runs on whatever PHP a customer's Craft
+    # installation happens to have. Testing only the newest would let a version-specific change into a
+    # package that has to behave identically on both sides of the wire.
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+          # Not optional here. Every signature, sealed key and artifact stream in this package is
+          # libsodium; without the extension the suite would skip the parts that matter.
+          extensions: sodium
+          coverage: none
+
+      - run: composer install --no-interaction --no-progress --prefer-dist
+
+      # The signing fixtures are the point of this job. They are committed byte-for-byte, so a change
+      # that alters a canonical string or an artifact header fails here rather than in production,
+      # where it would present as every connector suddenly failing to authenticate.
+      - run: composer test
+
+      - run: composer phpstan
+
+      # This package deliberately has no runtime dependencies beyond PHP and sodium. If an advisory
+      # ever appears, something has been added that should not have been.
+      - name: Dependency advisories
+        run: composer audit --locked
