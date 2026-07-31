@@ -4,6 +4,37 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and — more
 usefully — what was deliberately left out of it.
 
+## 1.4.0
+
+The PHP floor drops from 8.2 to 8.1. No code changed, and nothing on the wire moved.
+
+This exists to let the connector support Craft 4. Craft 4 runs on PHP 8.0.2+, and the sites still on
+Craft 4 are disproportionately the ones still on an older PHP — a connector that required 8.2 would
+have reached mainly the sites that could have upgraded to Craft 5 anyway.
+
+### What changed
+
+`composer.json` now requires `php: >=8.1`. That is the whole of it. The source already parsed on 8.1:
+the newest construct in the package is a `readonly` promoted constructor property, which is 8.1, and
+there was no readonly class, no standalone `false`/`null` return type and no constant in a trait.
+
+### Why 8.1 and not 8.0.2
+
+8.0.2 is Craft 4's own floor and would have reached every Craft 4 site. It was not free: `readonly`
+appears on thirteen promoted properties across `CanonicalRequest`, `CanonicalResponse` and
+`SchemaValidator`, and those are precisely the objects a signature is computed over. Trading their
+immutability for the sites still on 8.0 was not worth it.
+
+### What holds the floor
+
+`phpstan.neon` now sets `phpVersion: {min: 80100, max: 80400}`, so the source is analysed across the
+whole supported range rather than only on whatever the runner has.
+
+That is load-bearing, because the test matrix does **not** cover 8.1 and cannot: Pest 3 requires
+^8.2.0, so `composer install` will not resolve there. Without the PHPStan range this release would be
+a claim about 8.1 with nothing behind it — which is the failure mode worth naming, since it would
+present as an install error on a customer's site rather than as a red build here.
+
 ## 1.3.0
 
 Release notes cross the wire, and where they may be stored is the whole of the change.

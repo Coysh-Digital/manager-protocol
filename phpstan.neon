@@ -2,4 +2,14 @@ parameters:
     level: 8
     paths:
         - src
+
+    # The floor is 8.1 and the test matrix cannot prove it: Pest 3 requires 8.2, so `composer install`
+    # will not resolve on 8.1 and the suite has no way to run there. Analysing across the whole
+    # supported range is what stands in for that missing job — a readonly promoted property is fine
+    # here, a readonly *class* or a standalone `false` return type is not, and this fails on the
+    # commit rather than on somebody's Craft 4 site.
+    phpVersion:
+        min: 80100
+        max: 80400
+
     treatPhpDocTypesAsCertain: false
