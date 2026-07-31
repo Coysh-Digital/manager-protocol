@@ -1,0 +1,95 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/updates.v2.json",
+    "title": "updates.v2",
+    "description": "Update availability, as computed on the site. v1 with one addition: a plugin may carry the release notes for the versions between the one it is running and the one it could run. Still an allowlist — anything absent is rejected, not ignored, and there is still no download URL and no licence key. The notes are the text a plugin already publishes to the Craft Plugin Store, and the site already holds them; forwarding them saves the platform from having to ask a third party what every plugin in a fleet is called. What makes that safe is what the receiver does with them: notes are stored against a plugin and a version, never against a site, so a database learns 'this version fixed that' rather than 'that site is exposed to this'. A receiver that stores them per site has reintroduced exactly the problem v1 refused, and no schema can stop it.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "checked_at", "craft", "plugins"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["updates.v2"]
+        },
+        "checked_at": {
+            "description": "Unix timestamp of the check itself, which may be well before the report is sent.",
+            "type": "integer"
+        },
+        "craft": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["current", "latest", "update_available"],
+            "properties": {
+                "current": { "type": "string", "maxLength": 32 },
+                "latest": { "type": "string", "maxLength": 32 },
+                "update_available": { "type": "boolean" },
+
+                "releases_behind": { "type": "integer", "minimum": 0 },
+
+                "security_release_available": {
+                    "description": "Whether any release between current and latest is flagged critical. This is the field that decides whether a site is urgent.",
+                    "type": "boolean"
+                },
+
+                "latest_is_breaking": { "type": "boolean" }
+            }
+        },
+        "plugins": {
+            "type": "array",
+            "maxItems": 250,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["handle", "current", "update_available"],
+                "properties": {
+                    "handle": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$" },
+                    "name": { "type": "string", "maxLength": 191 },
+                    "current": { "type": "string", "maxLength": 32 },
+                    "latest": { "type": "string", "maxLength": 32 },
+                    "update_available": { "type": "boolean" },
+                    "releases_behind": { "type": "integer", "minimum": 0 },
+                    "security_release_available": { "type": "boolean" },
+                    "latest_is_breaking": { "type": "boolean" },
+                    "abandoned": {
+                        "description": "Composer's abandoned flag. Worth surfacing: an abandoned plugin will never receive a security fix.",
+                        "type": "boolean"
+                    },
+                    "releases": {
+                        "description": "The versions between current and latest, newest first. Sent only for a plugin that has an update available — there is nothing to describe otherwise. These bounds are an outer limit rather than a budget: a sender is expected to stop well short of them, because 250 plugins each carrying ten full release notes is a request nobody wants to receive.",
+                        "type": "array",
+                        "maxItems": 10,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["version"],
+                            "properties": {
+                                "version": { "type": "string", "maxLength": 32 },
+                                "notes": {
+                                    "description": "The release note as the plugin published it, in Markdown. Untrusted third-party text: a receiver renders it with HTML stripped or not at all.",
+                                    "type": "string",
+                                    "maxLength": 4000
+                                },
+                                "critical": { "type": "boolean" },
+                                "date": {
+                                    "description": "Release date as the plugin store gave it. A string rather than a date, because it is displayed and never compared.",
+                                    "type": "string",
+                                    "maxLength": 32
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "php": {
+            "description": "Whether the runtime itself is still supported. Counts and versions only.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "current": { "type": "string", "maxLength": 32 },
+                "security_support_until": { "type": "string", "maxLength": 32 },
+                "end_of_life": { "type": "boolean" }
+            }
+        }
+    }
+}

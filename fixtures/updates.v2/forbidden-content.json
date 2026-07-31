@@ -1,0 +1,27 @@
+{
+    "schema_version": "updates.v2",
+    "checked_at": 1785340000,
+    "craft": {
+        "current": "5.6.2",
+        "latest": "5.6.4",
+        "update_available": true,
+        "release_notes": "Fixes an authentication bypass in the control panel when...",
+        "download_url": "https://example.org/private/craft-5.6.4.zip"
+    },
+    "plugins": [
+        {
+            "handle": "formie",
+            "current": "3.0.11",
+            "update_available": true,
+            "releases": [
+                {
+                    "version": "3.0.14",
+                    "notes": "Fixes an authentication bypass in the submissions endpoint.",
+                    "download_url": "https://example.org/private/formie-3.0.14.zip",
+                    "licence_key": "ABCD-1234-EFGH-5678"
+                }
+            ]
+        }
+    ],
+    "licence_keys": ["ABCD-1234-EFGH-5678"]
+}
