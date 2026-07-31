@@ -97,7 +97,13 @@ it('refuses an artifact whose bytes were altered', function (): void {
     ArtifactStream::encrypt(memoryStream(random_bytes(4096)), $ciphertext, $key);
 
     $bytes = streamContents($ciphertext);
-    $bytes[SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_HEADERBYTES + 10] = "\x00";
+
+    // Invert the byte rather than assigning a constant. The key is fresh every run, so this byte is
+    // effectively uniform random -- and assigning "\x00" to a byte that already held "\x00" is not a
+    // tamper at all. About one run in 256 the artifact stayed intact, decrypted cleanly, and the test
+    // failed for having proved nothing.
+    $offset = SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_HEADERBYTES + 10;
+    $bytes[$offset] = chr(ord($bytes[$offset]) ^ 0xFF);
 
     expect(fn () => ArtifactStream::decrypt(memoryStream($bytes), memoryStream(), $key))
         ->toThrow(ProtocolException::class, 'failed authentication');
