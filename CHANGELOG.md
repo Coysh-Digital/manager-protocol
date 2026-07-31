@@ -4,6 +4,43 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and — more
 usefully — what was deliberately left out of it.
 
+## 1.3.0
+
+Release notes cross the wire, and where they may be stored is the whole of the change.
+
+Additive. `updates.v1.json` is untouched and still rejects everything it always rejected, so a 1.2
+connector and a 1.3 platform remain compatible in both directions. Nothing else in the package moved:
+no new capability, no signing change, and the fixtures verify byte for byte.
+
+### What changed
+
+`updates.v2.json` is `updates.v1.json` plus one field. A plugin entry may carry `releases[]` — the
+versions between the one a site is running and the one it could run, each with a `version` and
+optionally the `notes` the plugin published, a `critical` flag and a `date`. It is sent only for a
+plugin that actually has an update available, and it is bounded: ten releases per plugin, four
+thousand characters per note.
+
+### Why this is not the thing v1 refused
+
+v1's description said, flatly, "no release notes, no changelog bodies". That was aimed at a real
+problem and the problem has not gone away — but it was aimed slightly wrong.
+
+The text itself is public. The Craft Plugin Store serves it to anyone who asks, and the site already
+holds a copy, which is how the connector can send it without making a single outbound request. What
+was never safe was the *association*: a row that says "this named site is three versions behind these
+fixes" is a map of an exploitable installation, and that is worth refusing whether the notes arrive
+over the wire or are fetched afterwards.
+
+A schema cannot express where a receiver puts what it is given, so v2 carries the notes and states
+the obligation in its own description: store them against a plugin and a version, never against a
+site. The platform holds up that end — its `plugin_release_notes` table has no site column and an
+invariant test asserts the update report itself is stripped before it is written. A receiver that
+stores them per site has reintroduced exactly the problem v1 refused, and nothing here will stop it.
+
+The fields v1 refused for a simpler reason are still refused: no download URLs, no licence keys.
+`fixtures/updates.v1/forbidden-content.json` is unchanged and still must fail, and there is now a v2
+fixture beside it that must fail for the same reasons.
+
 ## 1.2.0
 
 The backup format that the platform cannot read.
