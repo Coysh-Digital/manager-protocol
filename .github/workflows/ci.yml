@@ -13,9 +13,15 @@ jobs:
     name: Contract tests
     runs-on: ubuntu-latest
 
-    # Both dependents declare >=8.2, and the connector runs on whatever PHP a customer's Craft
-    # installation happens to have. Testing only the newest would let a version-specific change into a
-    # package that has to behave identically on both sides of the wire.
+    # The connector runs on whatever PHP a customer's Craft installation happens to have. Testing only
+    # the newest would let a version-specific change into a package that has to behave identically on
+    # both sides of the wire.
+    #
+    # The floor is 8.1 but the matrix starts at 8.2, and the gap is deliberate rather than an
+    # oversight: Pest 3 requires ^8.2.0, so `composer install` cannot resolve on 8.1 and there is no
+    # suite to run there. What covers 8.1 instead is `phpVersion: {min: 80100}` in phpstan.neon, which
+    # analyses the source across the whole supported range and fails on a construct 8.1 cannot parse.
+    # If the dev dependency ever drops to ^8.1, add it here and delete this paragraph.
     strategy:
       fail-fast: false
       matrix:

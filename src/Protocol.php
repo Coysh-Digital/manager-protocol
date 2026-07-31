@@ -22,7 +22,7 @@ final class Protocol
     /**
      * @var string Package version. Independent of the platform and connector versions.
      */
-    public const VERSION = '1.3.0';
+    public const VERSION = '1.4.0';
 
     /**
      * @var string Prefix on the canonical string a connector signs.

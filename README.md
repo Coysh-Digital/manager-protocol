@@ -176,4 +176,4 @@ Report vulnerabilities privately to hello@coysh.digital. Do not open a public is
 
 **MIT.** See [LICENSE.md](LICENSE.md).
 
-Requires PHP 8.2+ and the `sodium` and `json` extensions. Nothing else.
+Requires PHP 8.1+ and the `sodium` and `json` extensions. Nothing else.
