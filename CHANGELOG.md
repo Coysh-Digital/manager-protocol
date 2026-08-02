@@ -4,6 +4,70 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and — more
 usefully — what was deliberately left out of it.
 
+## 1.5.0
+
+`backup.v3` and `backup-manifest.v3`. An artifact may now be larger than two gigabytes, and the
+decision about how much larger stops being the protocol's.
+
+### What was wrong
+
+`backup.v2` declared `artifact_bytes` with `"maximum": 2147483648` and described it as "the platform's
+artifact limit". It was not the platform's limit. It was this package's, written into a published
+schema where no operator could raise it and no hosted edition could lift it, and the description
+saying otherwise is how it went unnoticed.
+
+It refused four consecutive nightly backups on a live site whose database had grown past it. The
+hosted edition had already decided that a customer past their allowance should be **billed for the
+space rather than refused the backup** — it binds a seam that tells the connector "no limit" — and
+then the wire contract refused anyway, after the site had dumped and encrypted the whole database.
+`backup-manifest.v2` carried the same 2 GiB maximum on `plaintext_bytes` and `ciphertext_bytes`, so a
+declaration let through on size would have been refused a step later on the same grounds.
+
+### What changed
+
+- **`backup.v3`** — `artifact_bytes` keeps its floor of 128 and has no maximum. What an individual
+  platform accepts is that platform's configuration, enforced there, and named in the refusal so an
+  operator can change it.
+- **`backup-manifest.v3`** — `plaintext_bytes` and `ciphertext_bytes` likewise keep `minimum: 1` and
+  lose their maxima.
+- **`artifact_crc32c`** is added to the declaration, and required. Above five gigabytes an artifact
+  cannot be uploaded in one request, and an object store can only confirm a whole-object checksum
+  across a multipart assembly if the algorithm linearises. SHA-256 does not; CRC-32C does.
+- **`Protocol::MIN_ARTIFACT_BYTES`, `SINGLE_PUT_MAX_BYTES` and `ARTIFACT_PART_BYTES`** are added.
+  `MAX_ARTIFACT_BYTES` keeps its name and its value and becomes a *default* — what a platform adopts
+  when its operator has chosen nothing. Its docblock says so; nothing that reads it needs to change.
+
+### What was deliberately left out
+
+- **No part locations.** The declaration gained a checksum and nothing else. There is no host, no
+  bucket, no endpoint, no region, no upload id and no array of part URLs, and `BackupV3SchemaTest`
+  asserts each of those names is absent rather than merely unused. A multipart upload is the first
+  time an artifact travels as more than one request, which makes it exactly the change during which a
+  destination would arrive as data "for convenience". The connector's build check already refuses a
+  destination read from anything the platform sends; this keeps there being nothing to read.
+- **No per-part checksums.** They were the alternative to CRC-32C and would have meant the platform
+  confirming N hashes a connector declared instead of one whole-file value. Full-object mode keeps
+  the binding whole-file.
+- **No new envelope.** `FORMAT_MAJOR` is still 2 and `MANIFEST_SIGNING_PREFIX` is still
+  `MGRBAK-MANIFEST-v2\n`. A v3 artifact differs from a v2 one only in which numbers its manifest is
+  permitted to carry, so a reader needs a second schema name and no second verification path — and
+  every artifact ever written stays verifiable by the rule it was written under.
+- **No looser chunking.** `chunk_bytes` is still pinned to 1 MiB. A larger artifact means more chunks,
+  not larger ones, so nothing about how a reader frames the stream moved.
+- **Nothing removed from v2.** Both v2 schemas are untouched and still refuse exactly what they always
+  refused; there are tests asserting it in both directions. A connector still sending `backup.v2` gets
+  v2's answer, including its ceiling. `signing.json` and `envelope.v2/artifact.bin` are byte-identical.
+
+### On the CRC, honestly
+
+On the multipart path an object store enforces a CRC-32C rather than a SHA-256. Against corruption in
+transit the two are equivalent, which is the job this checksum does. Against a connector deliberately
+sending other bytes, CRC-32C is forgeable and SHA-256 is not — but that connector chose the plaintext
+in the first place, and a platform holding a v2 or v3 artifact cannot read it either way. What binds
+these bytes to a site has never been the transport checksum: it is the Ed25519 signature over the
+manifest, which the customer verifies offline with `manager-restore`. `artifact_sha256` stays in the
+declaration, stays covered by the request signature, and stays what restore checks.
+
 ## 1.4.0
 
 The PHP floor drops from 8.2 to 8.1. No code changed, and nothing on the wire moved.

@@ -1,0 +1,56 @@
+{
+    "manifest_version": "backup-manifest.v3",
+    "artifact_id": "01JZX9K2Q4M8N7P6T5V3W2Y1B0",
+    "site_id": "01JRZX9K2Q4M8N7P6T5V3W2Y1B",
+    "site_key_fingerprint": "MGRS-4GNX-3FDQ-K2MR-0B0S-ES6F-NRP1",
+    "taken_at": 1785340000,
+    "sequence": 43,
+    "encryption": {
+        "scheme": "xchacha20poly1305-secretstream-v1",
+        "chunk_bytes": 1048576,
+        "stream_header": "im1rveDfLNm98tQJWl4HpU2X1PA5j0IR"
+    },
+    "key_wrapping": {
+        "algorithm": "x25519-crypto_box_seal-v1",
+        "recipients": [
+            {
+                "fingerprint": "MGRK-VTWG-MAB4-AMWS-RE3Z-KMH7-AD5C",
+                "public_key": "ZIhGH5+agPb4dwkmKfHGe87cqV4yjNtWRowkmEdTXmE=",
+                "wrapped_key": "s97/j7AO6D2n4DRvNliDHb6yHVqTk5wqDqHvi2xNk1UhSzYEsTCDz0slGz4z1kNasmumszOMbD3wz7g5x16E4HSKoFFNyy4mhklj1+R/+s0=",
+                "label": "Ops laptop",
+                "private_key": "FvwFeVcXHAnl9qjefo59QtXj7dfr2cB3+DpTGLKdllo=",
+                "secret_key": "bWFuYWdlci1hcnRpZmFjdC1maXh0dXJlLWtleTAwMDA="
+            },
+            {
+                "fingerprint": "MGRK-139V-DYMJ-0TMZ-3M8B-7E0Q-NE1F",
+                "public_key": "8oTYoI3ySHDC+8FuHsE3diSCrJQjJOTCwawuxUFXlXo=",
+                "wrapped_key": "bwKsTuV02DHV28x/dAayB2Qvsm4i7P3R63y18WeaCQh7sgm14slxLc0sI20aHxvJJcjgSAg7bgv2779pmH6AoQFHgmhbto7Qr9d6b/ZnxMo=",
+                "label": "Safe"
+            }
+        ]
+    },
+    "integrity": {
+        "plaintext_sha256": "520d2673df2ffac78e3ddbce6b2746bce26671e4901cdc65a62fe10f089f45fc",
+        "ciphertext_sha256": "8ccb0d1e0883d41efe4d1cfac18c57ba5250a413a280d3ce08662e44113c0089",
+        "plaintext_bytes": 21474836480,
+        "ciphertext_bytes": 21475184664
+    },
+    "source": {
+        "engine": "mysql",
+        "engine_version": "8.0.36",
+        "compressed": false,
+        "compression": "none",
+        "database_password": "hunter2",
+        "dsn": "mysql:host=10.0.0.4;dbname=craft"
+    },
+    "local_path": "/var/www/craft/storage/backups/craft.sql.gz",
+    "tables": [
+        "entries",
+        "users"
+    ],
+    "sample_rows": [
+        {
+            "id": 1
+        }
+    ]
+}

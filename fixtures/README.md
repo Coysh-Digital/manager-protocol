@@ -34,6 +34,31 @@ The same pattern: `valid.json` is accepted, `forbidden-content.json` is rejected
 file carries is listed in the schema's own description — a dump path and table names for `backup.v1`,
 filesystem paths and visitor addresses for `system.v1`, usernames and source addresses for `logins.v1`.
 
+## `backup.v3/`, `backup-manifest.v3/`
+
+The same three files each, and one thing worth knowing before reading them.
+
+| File | Expectation |
+|---|---|
+| `backup.v3/valid.json` | Accepted. A declaration for a **twenty-gigabyte** artifact — ten times what `backup.v2` permitted, which is the entire reason v3 exists. |
+| `backup-manifest.v3/valid.json` | Accepted. The manifest that declaration carries, with `plaintext_bytes` and `ciphertext_bytes` past v2's 2 GiB maximum. |
+| `unknown-field.json`, `forbidden-content.json` | **Rejected**, carrying the same things their v2 counterparts do. `backup.v3`'s unknown field is `storage_endpoint`, which models the mistake worth catching during exactly this change: v3 is the first version whose artifact travels as more than one request, and a destination arriving as data is what that would tempt somebody into. |
+
+**Everything in these files is derived, and reproducible from this repository.** `manifest_b64` is
+the base64 of `backup-manifest.v3/valid.json`'s exact committed bytes, `manifest_sha256` is their
+SHA-256, and `manifest_signature` is a real Ed25519 signature by the fixture site key in
+`envelope.v2/reference.json` — `BackupV3SchemaTest` verifies it rather than matching its shape.
+
+**The one thing that is not derived from a real file is the artifact itself**, and it says so here
+rather than pretending otherwise. There is no committed twenty-gigabyte `artifact.bin`; committing one
+is not a thing to do to a git repository. So `artifact_sha256` and `artifact_crc32c` are the two
+checksums of a byte string built from a printable fixed seed — the same convention every key in
+`envelope.v2/reference.json` follows — and `artifact_bytes` is computed from the envelope arithmetic
+and the manifest's own `ciphertext_bytes`. The pair of checksums is the part that matters: the same
+bytes under SHA-256, which is what a customer verifies offline, and under CRC-32C, which is what an
+object store can check across a multipart assembly. SHA-256 does not linearise and cannot be checked
+that way, which is why v3 carries both.
+
 ## `envelope.v2/`
 
 The reference artifact, and the most load-bearing fixture here.

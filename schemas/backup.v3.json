@@ -1,0 +1,65 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/backup.v3.json",
+    "title": "backup.v3",
+    "description": "What a connector declares about an artifact before it uploads the bytes. Identical to backup.v2 in everything that describes the artifact — same envelope, same encryption, same signature over the same manifest bytes — and different in exactly two ways, both about size. First, `artifact_bytes` carries no maximum: v2 hard-coded one at 2 GiB and described it as 'the platform's artifact limit', which is what it should have been rather than what it was. A ceiling baked into a published wire contract is a ceiling no operator can raise and no hosted edition can lift, and it refused live backups on storage that was already being metered and paid for. The limit belongs to the platform's own configuration, where it is enforced, where it can be changed, and where the refusal can name it. Second, `artifact_crc32c` is added, because an artifact past a few gigabytes cannot be uploaded in one request and the object store validates a multipart assembly with a CRC rather than a SHA. Note what is absent, as in v2 and v1 — no key the platform could use, no database credentials, no connection details, no table names, no row counts, no file paths and no sample of the contents.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "schema_version",
+        "job_id",
+        "manifest_b64",
+        "manifest_sha256",
+        "manifest_signature",
+        "artifact_sha256",
+        "artifact_crc32c",
+        "artifact_bytes"
+    ],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["backup.v3"]
+        },
+        "job_id": {
+            "description": "The backup.create job this artifact belongs to. Declaring twice for the same job returns the first artifact rather than creating a second, which is how a retry stays harmless. Expressed as a pattern rather than a length pair because this validator does not implement minLength — a ULID is exactly 26 Crockford base32 characters, so the pattern says exactly that.",
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}\\z"
+        },
+        "manifest_b64": {
+            "description": "Base64 of the exact manifest bytes embedded in the artifact file. Decoded and validated against backup-manifest.v3 after the signature verifies, never before.",
+            "type": "string",
+            "maxLength": 87384,
+            "pattern": "^[A-Za-z0-9+/]+={0,2}\\z"
+        },
+        "manifest_sha256": {
+            "description": "SHA-256 of the decoded manifest bytes. Redundant against the signature and kept anyway, because it gives the platform something cheap to index and compare without holding any key.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}\\z"
+        },
+        "manifest_signature": {
+            "description": "Base64 Ed25519 signature by this site's connector key, over the manifest signing prefix concatenated with the manifest bytes. Also present inside the artifact file, so whoever holds the file can verify it came from their site without asking the platform anything. The prefix is unchanged from v2: the envelope did not move, so every artifact ever written stays verifiable by the same rule.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+/]{86}==\\z"
+        },
+        "artifact_sha256": {
+            "description": "SHA-256 of the whole uploaded file — envelope, manifest, signature and encrypted stream. Declared before the bytes are sent and covered by the request signature, so the platform authenticates the claim before reading a byte and rejects the stream the moment it diverges. Distinct from the manifest's ciphertext_sha256, which covers the encrypted stream alone. This remains the artifact's integrity checksum and the one a customer's offline restore verifies; artifact_crc32c below never replaces it.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}\\z"
+        },
+        "artifact_crc32c": {
+            "description": "CRC-32C of the same bytes as artifact_sha256, as eight lowercase hex characters. Present because of a property of object stores rather than of this protocol: an artifact too large for a single request is assembled from parts, and a store can only confirm a whole-object checksum for an assembly if the algorithm linearises — which SHA-256 does not and CRC-32C does. So this is the value a platform hands its object store to have the finished assembly checked server-side, and it is a transport check, nothing more. Against corruption in transit it is equivalent to a SHA; against a connector that deliberately sends other bytes it is forgeable and a SHA is not. That is not a weakening, because it was never the control: a platform holding a v2 or v3 artifact cannot read it either way, and what binds these bytes to this site is the Ed25519 signature over the manifest, checked offline by the customer. Required rather than optional so that a platform never discovers, at the moment it needs to assemble twenty gigabytes, that it was not sent.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}\\z"
+        },
+        "artifact_bytes": {
+            "description": "Size of the whole uploaded file. The floor is the smallest envelope that could exist. There is deliberately no ceiling here: what an individual platform will accept is its own configuration, checked by the platform, and stated in the refusal so an operator can change it. v2 carried a fixed 2 GiB maximum in this position and it acted as a limit nobody had chosen — unreachable from the hosted edition that owns and bills for the storage, and unreachable from the customer's own server, where the corresponding connector setting lives in a config file most sites do not have.",
+            "type": "integer",
+            "minimum": 128
+        },
+        "upload_mode": {
+            "description": "Where the bytes went. 'platform' means the connector streamed them to the platform it paired with; 'direct' means it used a short-lived grant whose host was pinned in local configuration on the site's own server. Reported after the fact, never instructed — nothing the platform sends names a host.",
+            "type": "string",
+            "enum": ["platform", "direct"]
+        }
+    }
+}
