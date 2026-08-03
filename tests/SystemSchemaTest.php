@@ -89,3 +89,116 @@ it('is valid with nothing but the core fields', function (): void {
         'collected_at' => 1785400000,
     ]))->toBe([]);
 });
+
+/*
+ | system.v2.
+ |
+ | v1 is untouched and still refuses everything it refused, so a v1 connector and a v2 platform stay
+ | compatible in both directions.
+ |
+ | What v2 adds is two categories per volume, and the interesting question is not whether they
+ | validate but whether they stay categories. `location` exists so a screen can say the bytes are not
+ | on the server's disk; the moment it can carry a bucket, a region, an endpoint or an adapter class
+ | it is naming a customer's infrastructure instead, which is the same boundary `path` and
+ | `largest_files` are on the wrong side of.
+ */
+it('accepts a v2 report that says where each volume lives and why it went unmeasured', function (): void {
+    expect(SchemaValidator::forSchema('system.v2')->validate(fixture('system.v2/valid.json')))
+        ->toBe([]);
+});
+
+it('refuses to let location become the name of somebody\'s infrastructure', function (): void {
+    $joined = implode(' ', SchemaValidator::forSchema('system.v2')->validate(fixture('system.v2/forbidden-content.json')));
+
+    expect($joined)->toContain('bucket')
+        ->and($joined)->toContain('region')
+        ->and($joined)->toContain('endpoint')
+        ->and($joined)->toContain('adapter')
+        ->and($joined)->toContain('path')
+        ->and($joined)->toContain('largest_files');
+});
+
+it('never echoes a rejected v2 value either', function (): void {
+    $joined = implode(' ', SchemaValidator::forSchema('system.v2')->validate(fixture('system.v2/forbidden-content.json')));
+
+    expect($joined)->not->toContain('acme-production-uploads')
+        ->and($joined)->not->toContain('eu-west-2')
+        ->and($joined)->not->toContain('board-minutes')
+        ->and($joined)->not->toContain('/var/www');
+});
+
+it('keeps location to the two values a screen can act on', function (): void {
+    // "s3" is the tempting third value and the one that starts the slide: a provider name invites a
+    // bucket beside it. What a reader needs to know is whether the bytes count towards the disk,
+    // and that has two answers.
+    $payload = fixture('system.v2/valid.json');
+    $payload['storage']['volumes'][0]['location'] = 's3';
+
+    expect(SchemaValidator::forSchema('system.v2')->validate($payload))->not->toBe([]);
+});
+
+it('distinguishes the three reasons a volume goes unmeasured', function (): void {
+    /*
+     * The whole point of the version. v1 said `measured: false` for remote storage, for a walk that
+     * ran out of its time budget, and for a path that could not be opened — three situations
+     * wanting three different responses: nothing, a larger budget, and someone fixing a
+     * misconfiguration.
+     */
+    $volumes = fixture('system.v2/valid.json')['storage']['volumes'];
+
+    $reasons = [];
+
+    foreach ($volumes as $volume) {
+        if (($volume['measured'] ?? true) === false) {
+            $reasons[$volume['handle']] = $volume['unmeasured_reason'];
+        }
+    }
+
+    expect($reasons)->toBe([
+        'archive' => 'remote',
+        'video' => 'timeout',
+        'legacy' => 'unreadable',
+    ]);
+
+    // And a made-up fourth reason is not a reason.
+    $payload = fixture('system.v2/valid.json');
+    $payload['storage']['volumes'][2]['unmeasured_reason'] = 'because';
+
+    expect(SchemaValidator::forSchema('system.v2')->validate($payload))->not->toBe([]);
+});
+
+it('lets a timed-out walk report the bytes it did reach', function (): void {
+    // A floor, not a total, and the platform is told which. Refusing partial figures would throw
+    // away the only number a huge volume ever produces.
+    $volumes = fixture('system.v2/valid.json')['storage']['volumes'];
+
+    $video = array_values(array_filter(
+        $volumes,
+        static fn (array $volume): bool => $volume['handle'] === 'video',
+    ))[0];
+
+    expect($video['measured'])->toBeFalse()
+        ->and($video['unmeasured_reason'])->toBe('timeout')
+        ->and($video['bytes'])->toBeGreaterThan(0);
+});
+
+it('still accepts a v2 report from a site that can say neither', function (): void {
+    // Both fields are optional. A connector that cannot tell — an adapter shape it does not
+    // recognise — omits them rather than guessing, and the platform shows what v1 showed.
+    expect(SchemaValidator::forSchema('system.v2')->validate([
+        'schema_version' => 'system.v2',
+        'collected_at' => 1785400000,
+        'storage' => ['volumes' => [['handle' => 'images', 'bytes' => 1024, 'measured' => true]]],
+    ]))->toBe([]);
+});
+
+it('will not accept a v1 report under the v2 name, or the reverse', function (): void {
+    // The version string is part of the contract rather than a label on it.
+    $v1 = fixture('system.v1/valid.json');
+
+    expect(SchemaValidator::forSchema('system.v2')->validate($v1))->not->toBe([]);
+
+    $v2 = fixture('system.v2/valid.json');
+
+    expect(SchemaValidator::forSchema('system.v1')->validate($v2))->not->toBe([]);
+});

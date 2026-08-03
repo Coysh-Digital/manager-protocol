@@ -1,0 +1,39 @@
+{
+    "schema_version": "system.v2",
+    "collected_at": 1785400000,
+    "storage": {
+        "volumes": [
+            {
+                "handle": "images",
+                "bytes": 4294967296,
+                "location": "s3",
+                "bucket": "acme-production-uploads",
+                "region": "eu-west-2",
+                "endpoint": "https://s3.eu-west-2.amazonaws.com",
+                "adapter": "craft\\awss3\\Fs",
+                "path": "/var/www/vhosts/example.org/web/uploads/images",
+                "largest_files": [
+                    { "name": "board-minutes-2026-confidential.pdf", "bytes": 88401 },
+                    { "name": "staff-salaries.xlsx", "bytes": 41022 }
+                ]
+            }
+        ],
+        "storage_bytes": 1073741824,
+        "web_root": "/var/www/vhosts/example.org/web"
+    },
+    "php": {
+        "version": "8.3.14",
+        "ini_path": "/etc/php/8.3/fpm/php.ini",
+        "extensions": ["core", "curl", "ioncube_loader", "newrelic"],
+        "phpinfo": "PHP Version 8.3.14\nSystem => Linux web07.example.org",
+        "open_basedir": "/var/www/vhosts/example.org"
+    },
+    "response": {
+        "samples": 3,
+        "slowest_urls": [
+            { "url": "/admin/login?redirect=%2Fadmin", "ms": 8100 },
+            { "url": "/search?q=board+minutes", "ms": 6400 }
+        ],
+        "client_ips": ["203.0.113.9", "198.51.100.4"]
+    }
+}
