@@ -22,7 +22,7 @@ final class Protocol
     /**
      * @var string Package version. Independent of the platform and connector versions.
      */
-    public const VERSION = '1.4.0';
+    public const VERSION = '1.5.0';
 
     /**
      * @var string Prefix on the canonical string a connector signs.
@@ -50,15 +50,55 @@ final class Protocol
     public const MAX_PAYLOAD_BYTES = 262144;
 
     /**
-     * @var int Largest backup artifact the platform will accept, in bytes.
+     * @var int The artifact ceiling a platform adopts when its operator has not chosen one, in bytes.
      *
      * A backup does not travel as a payload — it is streamed, on its own route, and the ordinary
      * payload cap would refuse it before it started. This is the separate ceiling for that route.
      *
-     * The number is a deliberate policy statement rather than a technical limit: an artifact larger
-     * than this is a site whose backup strategy needs a conversation, not a bigger buffer.
+     * A default, not a limit, and the distinction is the whole of what changed in 1.5.0. The number
+     * is the same one `backup.v2` hard-coded into its `artifact_bytes` maximum, where it stopped
+     * being anybody's decision: an operator could not raise it, and a hosted edition that owns and
+     * bills for the storage could not lift it. It refused live backups for four nights on a site
+     * whose database had simply grown. `backup.v3` carries no maximum, so the ceiling is now
+     * wherever the platform configures it — and a platform that configures nothing lands here, which
+     * is the right place for a self-hosted installation writing to a disk its own operator owns.
+     *
+     * Still a policy statement rather than a technical one. An artifact larger than this is a site
+     * whose backup strategy is worth a conversation; it is no longer a site the protocol refuses to
+     * describe.
      */
     public const MAX_ARTIFACT_BYTES = 2147483648;
+
+    /**
+     * @var int Smallest artifact that could exist, in bytes.
+     *
+     * The envelope, a minimal manifest and a signature, with an empty stream after them. Named here
+     * so `backup.v3`'s floor has a source rather than being a literal repeated in a schema.
+     */
+    public const MIN_ARTIFACT_BYTES = 128;
+
+    /**
+     * @var int Largest artifact an object store will accept in a single request, in bytes.
+     *
+     * Not a protocol decision — this is S3's documented limit for one PUT, and every store worth
+     * pointing at has adopted the same number. It lives here because both sides need to agree on
+     * when an upload changes shape: below it one request carries the file, above it the file is
+     * assembled from parts and the whole-object checksum has to be one that linearises.
+     */
+    public const SINGLE_PUT_MAX_BYTES = 5368709120;
+
+    /**
+     * @var int Bytes per part when an artifact is uploaded in more than one request.
+     *
+     * 256 MiB puts a 20 GB artifact in eighty parts and a 5 GB one in twenty, comfortably inside the
+     * ten thousand parts a store permits, while keeping a failed part cheap to retry. A platform may
+     * serve a different size; this is what it uses when it has not been told otherwise.
+     *
+     * Unrelated to {@see self::ARTIFACT_CHUNK_BYTES}, which frames the encrypted stream and cannot
+     * move. This one only decides how the finished file is cut up for transport, so changing it
+     * changes nothing about whether an existing artifact can be read.
+     */
+    public const ARTIFACT_PART_BYTES = 268435456;
 
     /**
      * @var int Bytes per chunk when encrypting or decrypting an artifact.

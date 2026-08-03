@@ -1,0 +1,168 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/backup-manifest.v3.json",
+    "title": "backup-manifest.v3",
+    "description": "The self-describing header of a v3 artifact. Everything needed to decrypt the file offline — with a private key and the file, and nothing else — is here: which scheme, which chunk size, which stream header, and one wrapped copy of the data-encryption key per recovery key that was active when the backup was taken. Nothing here describes the data inside the backup. A person holding only this document learns that a database of a certain size was taken from a certain site at a certain time, and which keys can open it. They learn nothing about what is in it. The only difference from backup-manifest.v2 is that plaintext_bytes and ciphertext_bytes carry no maximum. The envelope is unchanged and so is the signing prefix, so a reader that understands v2 needs no new cryptography to read v3 — only permission to believe a larger number.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "manifest_version",
+        "artifact_id",
+        "site_id",
+        "site_key_fingerprint",
+        "taken_at",
+        "sequence",
+        "encryption",
+        "key_wrapping",
+        "integrity"
+    ],
+    "properties": {
+        "manifest_version": {
+            "type": "string",
+            "enum": ["backup-manifest.v3"]
+        },
+        "artifact_id": {
+            "description": "Minted by the connector, not the platform. The file has to be able to name itself before any platform has seen it, or an exported artifact sitting in a customer's storage is anonymous.",
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}\\z"
+        },
+        "site_id": {
+            "description": "The site identifier issued at pairing. Present so an artifact found on its own can be traced back to what produced it.",
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}\\z"
+        },
+        "site_key_fingerprint": {
+            "description": "Fingerprint of the Ed25519 connector key that signed this manifest. A customer who has recorded this from their own Craft control panel can confirm the artifact came from their site without asking the platform, which matters because the platform is the party they are checking.",
+            "type": "string",
+            "pattern": "^MGRS(-[0-9A-HJKMNP-TV-Z]{4}){6}\\z"
+        },
+        "taken_at": {
+            "description": "Unix timestamp of the dump, which may be meaningfully earlier than the upload on a large site. Bounded so a wrong clock is visible rather than sorted into the wrong decade.",
+            "type": "integer",
+            "minimum": 1704067200,
+            "maximum": 4102444800
+        },
+        "sequence": {
+            "description": "Connector-local counter, monotonic per site. Two artifacts claiming the same sequence, or a gap where the platform shows none, is how a rollback becomes visible to somebody looking for one.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+        },
+        "encryption": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scheme", "chunk_bytes", "stream_header"],
+            "properties": {
+                "scheme": {
+                    "description": "Enumerated rather than free text. A different scheme is a different manifest version, not a different value in this one — that is what stops a reader guessing at bytes it does not understand.",
+                    "type": "string",
+                    "enum": ["xchacha20poly1305-secretstream-v1"]
+                },
+                "chunk_bytes": {
+                    "description": "Plaintext bytes per encrypted chunk. Pinned to a single value, because a reader has to frame the stream the way the writer did and the wire contract is the place that decides, not a constant either implementation could change on its own. Unchanged from v2 deliberately: a larger artifact means more chunks, not larger ones, so nothing about how a reader frames the stream moves.",
+                    "type": "integer",
+                    "minimum": 1048576,
+                    "maximum": 1048576
+                },
+                "stream_header": {
+                    "description": "Base64 secret-stream header. Also the first bytes of the encrypted body; kept here so a reader can detect a mismatch between what the manifest describes and what follows it.",
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9+/]{32}\\z"
+                }
+            }
+        },
+        "key_wrapping": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["algorithm", "recipients"],
+            "properties": {
+                "algorithm": {
+                    "type": "string",
+                    "enum": ["x25519-crypto_box_seal-v1"]
+                },
+                "recipients": {
+                    "description": "One entry per recovery key that was active when this backup was taken. Bounded, because every entry is another copy of the key that opens this file. At least one entry is required — that is checked in code, not here, because this validator implements no minItems and a schema that appeared to promise one would be lying.",
+                    "type": "array",
+                    "maxItems": 8,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["fingerprint", "public_key", "wrapped_key"],
+                        "properties": {
+                            "fingerprint": {
+                                "description": "The recovery key's fingerprint, in the one canonical form used everywhere: on the wire, in the database, on screen, and in the site's own configuration file where it is pinned.",
+                                "type": "string",
+                                "pattern": "^MGRK(-[0-9A-HJKMNP-TV-Z]{4}){6}\\z"
+                            },
+                            "public_key": {
+                                "description": "Base64 raw X25519. Carried as well as the fingerprint for two reasons: libsodium needs both halves of a keypair to open a sealed box, and a person reading this file should be able to see exactly what it is bound to rather than a hash of it.",
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9+/]{43}=\\z"
+                            },
+                            "wrapped_key": {
+                                "description": "This artifact's data-encryption key, sealed to the public key above. Eighty bytes: thirty-two of key, thirty-two of ephemeral public key, sixteen of authentication tag.",
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9+/]{107}=\\z"
+                            },
+                            "label": {
+                                "description": "What the organisation called this key. Convenience for whoever is looking for the right file at three in the morning; it identifies a key, never a person.",
+                                "type": "string",
+                                "maxLength": 120
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "integrity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["plaintext_sha256", "ciphertext_sha256", "plaintext_bytes", "ciphertext_bytes"],
+            "properties": {
+                "plaintext_sha256": {
+                    "description": "SHA-256 of the backup itself, so whoever decrypts it can confirm they have what was taken. The ciphertext hash cannot tell them that.",
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}\\z"
+                },
+                "ciphertext_sha256": {
+                    "description": "SHA-256 of the encrypted stream only — its header and chunks — not of the whole file. The whole-file hash lives in the declaration, where the transport needs it.",
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}\\z"
+                },
+                "plaintext_bytes": {
+                    "description": "Size of the dump before encryption. No ceiling, for the same reason artifact_bytes in the declaration has none: how large a database a platform is prepared to store is that platform's configuration, and v2's fixed 2 GiB here would have refused a large site's manifest even after the declaration was let through.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "ciphertext_bytes": {
+                    "description": "Size of the encrypted stream — header and chunks — which is the whole artifact less the envelope and manifest. No ceiling, as above.",
+                    "type": "integer",
+                    "minimum": 1
+                }
+            }
+        },
+        "source": {
+            "description": "What produced the dump, so an operator knows what will read it back. A name, never a connection.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "engine": {
+                    "type": "string",
+                    "enum": ["mysql", "mariadb", "postgresql"]
+                },
+                "engine_version": {
+                    "type": "string",
+                    "maxLength": 32
+                },
+                "compressed": {
+                    "type": "boolean"
+                },
+                "compression": {
+                    "description": "How, when it is compressed. Craft compresses inside its own backup rather than as a separate step, so this records what came out rather than a stage anything observed.",
+                    "type": "string",
+                    "enum": ["gzip", "zip", "none"]
+                }
+            }
+        }
+    }
+}

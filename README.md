@@ -150,6 +150,19 @@ base64'd for exactly that reason.
 cross-implementation byte-compatibility test in this package, and the change from v1 to v2 is about who
 can obtain the key, not about how bytes are encrypted.
 
+A v3 artifact is **the same file**. The envelope above, the signing prefix, the encryption and the
+chunk size are all identical, and `FORMAT_MAJOR` is still 2 — a reader that opens a v2 artifact opens a
+v3 one with no new cryptography. What changed is only what the two documents are permitted to *say*
+about size: `backup.v2` hard-coded a 2 GiB maximum on `artifact_bytes`, `backup-manifest.v2` did the
+same for the dump and the ciphertext, and `backup.v3`/`backup-manifest.v3` carry no maximum at all. How
+large an artifact a platform will accept belongs to that platform's configuration, where an operator
+can change it and a refusal can name it.
+
+`backup.v3` also requires `artifact_crc32c` beside `artifact_sha256`. Above five gigabytes an artifact
+is assembled from parts, and an object store can only verify a whole-object checksum across such an
+assembly when the algorithm linearises — CRC-32C does, SHA-256 does not. It is a transport check and
+never the integrity one: `artifact_sha256` remains what a customer verifies offline.
+
 ## Fixtures
 
 `fixtures/` holds the cross-implementation contract — known inputs with their expected canonical
