@@ -4,6 +4,48 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and — more
 usefully — what was deliberately left out of it.
 
+## 1.6.0
+
+`system.v2`. A volume now says where its files are, and — when it could not be measured — which of
+the several different reasons applied.
+
+### What was wrong
+
+`measured: false` meant three unrelated things: the files are on remote storage and walking them
+would mean an API call per directory billed to the site; the walk started and ran out of the
+connector's time budget, so the figures are a floor; or the path resolved to nothing the process
+could open. A screen receiving that had no way to tell them apart, and they want three different
+responses — nothing at all, a larger budget, and somebody fixing a misconfiguration.
+
+The second half is arithmetic rather than presentation. A remote volume's bytes are not on the
+server's disk, so a report that cannot say which volumes are remote cannot say what the disk figures
+beside them do and do not include.
+
+### What changed
+
+- **`location`** — `local` or `remote`, per volume. Optional: a connector that cannot tell omits it
+  rather than guessing.
+- **`unmeasured_reason`** — `remote`, `timeout` or `unreadable`, and meaningful only where `measured`
+  is false. Also optional.
+
+`v1` is untouched and still refuses everything it refused, so a v1 connector and a v2 platform stay
+compatible in both directions.
+
+### What was deliberately left out
+
+**The adapter's name, and everything that travels with it.** `location` is two values, and the
+tempting third is `s3` — which reads as more useful and is the first step of a slide, because a
+provider name invites a bucket beside it, then a region, then an endpoint. Those identify a
+customer's infrastructure; `local` or `remote` says which of two shapes it has, which is all a
+screen needs to know whether the bytes count towards a disk. `v1`'s `handle` description said "not
+its path, and not its filesystem type", and only the second half of that has been relaxed. There is
+a must-fail fixture carrying a bucket, a region, an endpoint and an adapter class, and a test that
+the enum refuses `s3`.
+
+**A per-directory breakdown of what the walk did reach.** A timed-out volume reports the total it
+got to and that the total is partial. Saying *which* subtrees it managed would be a directory
+listing arriving one timeout at a time.
+
 ## 1.5.0
 
 `backup.v3` and `backup-manifest.v3`. An artifact may now be larger than two gigabytes, and the

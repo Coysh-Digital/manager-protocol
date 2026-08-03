@@ -1,0 +1,109 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/system.v2.json",
+    "title": "system.v2",
+    "description": "system.v1 plus two facts about each volume: whether its files are on the server's own disk, and — when it could not be measured — which of the several different reasons applied.\n\nv1 conflated them. `measured: false` meant remote storage, or a tree too large for the time budget, or a path that could not be read, and a screen showing that had no way to tell somebody which. The three want different responses: nothing, a larger budget, and a broken configuration.\n\nBoth additions are categories, not identifiers. v1's `handle` description says \"not its path, and not its filesystem type\", and the second half of that is what changes here — deliberately, and only as far as a closed two-value enum. `local` or `remote` says where the bytes live and therefore whether they can count towards the server's disk. It does not name a provider, a bucket, a region, an endpoint, an adapter class or a path, and it must never be widened to do so: those identify a customer's infrastructure, where this only says which of two shapes it has.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "collected_at"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["system.v2"]
+        },
+        "collected_at": {
+            "description": "Unix timestamp at which the connector gathered this data.",
+            "type": "integer"
+        },
+
+        "storage": {
+            "description": "Sizes of the volumes Craft manages. Labels are a closed set, so a site cannot name a directory here and thereby report a path.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "volumes": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["handle", "bytes"],
+                        "properties": {
+                            "handle": {
+                                "description": "The asset volume's handle. Not its path.",
+                                "type": "string",
+                                "maxLength": 128,
+                                "pattern": "^[A-Za-z0-9._-]+$"
+                            },
+                            "bytes": { "type": "integer", "minimum": 0 },
+                            "files": { "type": "integer", "minimum": 0 },
+                            "measured": {
+                                "description": "False when the volume could not be walked. A size of zero and a size nobody could measure are different facts, and `unmeasured_reason` says which of the several causes applied.",
+                                "type": "boolean"
+                            },
+                            "location": {
+                                "description": "Where this volume's files are. `local` means the server's own filesystem, so the bytes count towards its disk; `remote` means an object store or anything else reached over the network, so they do not and the disk figures elsewhere in this report say nothing about them. Two values on purpose — see this schema's description for why it is not the adapter's name.",
+                                "type": "string",
+                                "enum": ["local", "remote"]
+                            },
+                            "unmeasured_reason": {
+                                "description": "Why `measured` is false. `remote` — the files are not on this server and walking them would mean an API call per directory, billed to the site, to satisfy a dashboard. `timeout` — the walk started and ran out of the connector's storageWalkSeconds budget, so `bytes` and `files` are a floor rather than a total. `unreadable` — the path resolved to nothing this process could open, which is a configuration fault worth someone looking at. Absent when `measured` is true.",
+                                "type": "string",
+                                "enum": ["remote", "timeout", "unreadable"]
+                            }
+                        }
+                    }
+                },
+
+                "storage_bytes": {
+                    "description": "Craft's own storage directory: logs, caches, compiled templates, backups it has taken itself.",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "disk_free_bytes": { "type": "integer", "minimum": 0 },
+                "disk_total_bytes": { "type": "integer", "minimum": 0 }
+            }
+        },
+
+        "php": {
+            "description": "Runtime limits, as numbers. Never phpinfo(), never a path, never an ini file, and never the value of any setting that could name one.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "version": { "type": "string", "maxLength": 32 },
+                "sapi": { "type": "string", "maxLength": 32 },
+                "memory_limit_bytes": {
+                    "description": "-1 where the limit is unlimited, which is a real setting and not an error.",
+                    "type": "integer",
+                    "minimum": -1
+                },
+                "max_execution_time": { "type": "integer", "minimum": 0 },
+                "upload_max_filesize_bytes": { "type": "integer", "minimum": 0 },
+                "post_max_size_bytes": { "type": "integer", "minimum": 0 },
+                "max_input_vars": { "type": "integer", "minimum": 0 },
+                "opcache_enabled": { "type": "boolean" },
+                "opcache_memory_used_bytes": { "type": "integer", "minimum": 0 },
+                "opcache_memory_free_bytes": { "type": "integer", "minimum": 0 },
+                "extensions": {
+                    "description": "Count only. The list itself would fingerprint the host in a way a byte count does not.",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+
+        "response": {
+            "description": "How long the site took to build its own responses, sampled on the site from traffic that was happening anyway. This is server processing time — the connector cannot see network, TLS or queueing — so it is not time to first byte and the interface does not call it that.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "samples": { "type": "integer", "minimum": 0 },
+                "window_hours": { "type": "integer", "minimum": 1, "maximum": 168 },
+                "mean_ms": { "type": "number", "minimum": 0 },
+                "p50_ms": { "type": "number", "minimum": 0 },
+                "p95_ms": { "type": "number", "minimum": 0 },
+                "max_ms": { "type": "number", "minimum": 0 }
+            }
+        }
+    }
+}
