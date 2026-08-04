@@ -10,7 +10,7 @@ use coyshdigital\managerprotocol\SchemaValidator;
  * The v3 backup schemas, which exist for one reason: a size.
  *
  * v2 wrote a 2 GiB ceiling into `artifact_bytes` and described it as "the platform's artifact limit".
- * It was not the platform's limit — it was the protocol's, and a platform could not change it. On the
+ * It was not the platform's limit - it was the protocol's, and a platform could not change it. On the
  * hosted edition, which owns the storage and bills for it, that number refused four nightly backups on
  * a live site whose database had grown; on a self-hosted install the corresponding setting lives in a
  * config file on the customer's own server, which most sites do not have. A ceiling nobody can reach
@@ -20,7 +20,7 @@ use coyshdigital\managerprotocol\SchemaValidator;
  * change: to the platform's own configuration, checked by the platform, named in the refusal.
  *
  * Everything else is v2. Same envelope, same signing prefix, same encryption, same manifest structure
- * — which is why {@see it('reads a v3 manifest signature with the v2 rule')} matters more than it
+ * - which is why {@see it('reads a v3 manifest signature with the v2 rule')} matters more than it
  * looks: if the envelope had moved, every artifact ever written would need a new reader.
  */
 it('accepts a realistic v3 declaration', function (): void {
@@ -181,7 +181,7 @@ it('requires a crc alongside the sha, not instead of it', function (): void {
      |
      | SHA-256 is the artifact's integrity checksum: signed, covered by the request signature, and
      | what `manager-restore verify` checks offline. CRC-32C is a transport checksum and nothing more
-     | — it exists because an object store can confirm a whole-object CRC across a multipart assembly
+     | - it exists because an object store can confirm a whole-object CRC across a multipart assembly
      | and cannot do the same for a SHA, which does not linearise. Dropping the SHA would trade a
      | cryptographic binding for a forgeable one; dropping the CRC would put the ceiling back.
      */
@@ -253,7 +253,7 @@ it('accepts a dump far larger than v2 permitted', function (): void {
     $manifest = fixture('backup-manifest.v3/valid.json');
 
     // The second half of the same wall. A declaration let through on size would still have been
-    // refused here, because `declareV2` validates the decoded manifest too — so both maxima had to go
+    // refused here, because `declareV2` validates the decoded manifest too - so both maxima had to go
     // or neither was worth removing.
     expect($manifest['integrity']['plaintext_bytes'])->toBeGreaterThan(Protocol::MAX_ARTIFACT_BYTES)
         ->and($manifest['integrity']['ciphertext_bytes'])->toBeGreaterThan(Protocol::MAX_ARTIFACT_BYTES)

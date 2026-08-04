@@ -34,7 +34,7 @@ final class CanonicalRequest
          *
          * An artifact upload cannot be hashed after the fact and then judged: by then it has already
          * been read. So the sender declares the hash, the signature covers the declaration, and the
-         * receiver authenticates before reading a byte — then compares the stream against a promise
+         * receiver authenticates before reading a byte - then compares the stream against a promise
          * made before it started.
          */
         public readonly ?string $declaredBodyHash = null,

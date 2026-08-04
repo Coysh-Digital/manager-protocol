@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/system.v1.json",
     "title": "system.v1",
-    "description": "How a site's runtime is configured and how much room it is using. An allowlist: anything absent is rejected, not ignored. Note what is not here — no paths, no file names, no directory listings, no configuration values beyond the handful of numeric limits below, and nothing about the content of anything measured. A byte count of an assets volume says how much is there; it says nothing about what.\n\nSeparate from inventory.v1 rather than added to it, and behind its own capability. Measuring disk means walking a directory tree, and sampling request timings means the connector observes traffic — both are a different kind of collection from reading a version number, so granting one must be a deliberate act rather than something an existing grant quietly starts doing.",
+    "description": "How a site's runtime is configured and how much room it is using. An allowlist: anything absent is rejected, not ignored. Note what is not here - no paths, no file names, no directory listings, no configuration values beyond the handful of numeric limits below, and nothing about the content of anything measured. A byte count of an assets volume says how much is there; it says nothing about what.\n\nSeparate from inventory.v1 rather than added to it, and behind its own capability. Measuring disk means walking a directory tree, and sampling request timings means the connector observes traffic - both are a different kind of collection from reading a version number, so granting one must be a deliberate act rather than something an existing grant quietly starts doing.",
     "type": "object",
     "additionalProperties": false,
     "required": ["schema_version", "collected_at"],
@@ -38,7 +38,7 @@
                             "bytes": { "type": "integer", "minimum": 0 },
                             "files": { "type": "integer", "minimum": 0 },
                             "measured": {
-                                "description": "False when the volume could not be walked — remote storage, or a tree too large for the time budget. A size of zero and a size nobody could measure are different facts.",
+                                "description": "False when the volume could not be walked - remote storage, or a tree too large for the time budget. A size of zero and a size nobody could measure are different facts.",
                                 "type": "boolean"
                             }
                         }
@@ -83,7 +83,7 @@
         },
 
         "response": {
-            "description": "How long the site took to build its own responses, sampled on the site from traffic that was happening anyway. This is server processing time — the connector cannot see network, TLS or queueing — so it is not time to first byte and the interface does not call it that.",
+            "description": "How long the site took to build its own responses, sampled on the site from traffic that was happening anyway. This is server processing time - the connector cannot see network, TLS or queueing - so it is not time to first byte and the interface does not call it that.",
             "type": "object",
             "additionalProperties": false,
             "properties": {

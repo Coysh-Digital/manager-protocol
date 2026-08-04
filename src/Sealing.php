@@ -21,7 +21,7 @@ use SodiumException;
  * platform somehow. A sealed box is the right shape for this: it needs only the recipient's public
  * key, which the connector already holds from pairing, and it produces something only the holder of
  * the matching secret key can open. The connector cannot read back what it sealed, which is a
- * property rather than a limitation — a compromised site cannot recover the keys to artifacts it
+ * property rather than a limitation - a compromised site cannot recover the keys to artifacts it
  * uploaded last month.
  *
  * These are X25519 keys, separate from the Ed25519 keys used for signing. Using one keypair for both
@@ -136,7 +136,7 @@ final class Sealing
      * a small-order point. Sealing to such a key produces a box anybody can open, because the ephemeral
      * key agreement yields a shared secret an attacker can predict.
      *
-     * **This is not the control that prevents that attack.** libsodium already refuses — `crypto_box_seal`
+     * **This is not the control that prevents that attack.** libsodium already refuses - `crypto_box_seal`
      * on a small-order key throws, because `crypto_scalarmult` returns an error rather than a usable
      * secret. What this method buys is *when* the refusal happens. Without it, a recovery key entered
      * by hand looks fine until the night a site has already dumped its database to disk and is trying

@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/backup.v1.json",
     "title": "backup.v1",
-    "description": "What a connector declares about an artifact before it uploads the bytes. Metadata only: this describes a backup, it never contains one. Note what is absent — no database credentials, no connection details, no table names, no row counts, no file paths and no sample of the contents. The platform needs to be able to store the artifact, verify it arrived intact and eventually decrypt it; none of that requires knowing anything about the data inside.",
+    "description": "What a connector declares about an artifact before it uploads the bytes. Metadata only: this describes a backup, it never contains one. Note what is absent - no database credentials, no connection details, no table names, no row counts, no file paths and no sample of the contents. The platform needs to be able to store the artifact, verify it arrived intact and eventually decrypt it; none of that requires knowing anything about the data inside.",
     "type": "object",
     "additionalProperties": false,
     "required": ["schema_version", "job_id", "artifact"],

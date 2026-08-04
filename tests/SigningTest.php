@@ -175,7 +175,7 @@ it('does not verify when a streamed hash does not match the bytes that follow', 
 
     $signature = $declared->sign($keypair['secret']);
 
-    // The signature is over the declaration, so it still verifies — the declaration is what was
+    // The signature is over the declaration, so it still verifies - the declaration is what was
     // signed. Catching the substitution is the receiver's job, by hashing the stream and comparing.
     // This test exists to record that division of responsibility rather than to assume it.
     expect($declared->verify($signature, $keypair['public']))->toBeTrue()

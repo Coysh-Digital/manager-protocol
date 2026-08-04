@@ -17,7 +17,7 @@ use coyshdigital\managerprotocol\Sealing;
  * A v1 artifact meant nothing without the platform's database beside it, which was tolerable while the
  * platform held the key. It is not tolerable now. The test that matters most in this file is the one
  * that opens `envelope.v2/artifact.bin` with nothing but a private key and reads the original dump back
- * out — because that is the customer's position, and if it fails, zero-knowledge is a slogan.
+ * out - because that is the customer's position, and if it fails, zero-knowledge is a slogan.
  */
 it('opens the reference artifact with a private key and nothing else', function (): void {
     $reference = fixture('envelope.v2/reference.json');
@@ -94,7 +94,7 @@ it('verifies the reference manifest against the site key that signed it', functi
     ))->toBeTrue();
 
     // Pinned. If the signing prefix or the canonical bytes ever change, this stops verifying, and that
-    // is a wire-format break rather than a refactor — bump the protocol version, do not regenerate the
+    // is a wire-format break rather than a refactor - bump the protocol version, do not regenerate the
     // fixture.
     expect($envelope['signature'])->toBe($reference['manifest_signature'])
         ->and(hash('sha256', $envelope['manifest_bytes']))->toBe($reference['manifest_sha256'])

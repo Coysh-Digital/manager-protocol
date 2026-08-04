@@ -13,8 +13,8 @@ use coyshdigital\managerprotocol\SchemaValidator;
  * website, from where, and when. The operator's question is "is this site being attacked, and is
  * anybody locked out". That is four integers.
  *
- * The pressure to add more is real and will recur — a username makes the finding actionable, an
- * address makes it blockable — so the refusal lives in a schema with `additionalProperties: false`
+ * The pressure to add more is real and will recur - a username makes the finding actionable, an
+ * address makes it blockable - so the refusal lives in a schema with `additionalProperties: false`
  * rather than in a code review somebody has to remember to do.
  */
 it('accepts a realistic sign-in report', function (): void {

@@ -16,7 +16,7 @@ namespace coyshdigital\managerprotocol;
  *
  * Written by hand rather than pulled in as a dependency: this code runs on every inbound connector
  * payload and inside privileged plugin code on customer sites, so the spec asks for its
- * dependencies to be reviewed strictly. The supported subset is deliberately narrow — type, enum,
+ * dependencies to be reviewed strictly. The supported subset is deliberately narrow - type, enum,
  * required, properties, additionalProperties, items, minimum, maximum, maxItems, maxLength and
  * pattern.
  *
@@ -41,7 +41,7 @@ final class SchemaValidator
     public static function forSchema(string $name): self
     {
         // Hyphens are permitted between segments so a schema can be named for the thing it describes
-        // rather than for a namespace it does not have — `backup-manifest.v2` reads as what it is,
+        // rather than for a namespace it does not have - `backup-manifest.v2` reads as what it is,
         // where `manifest.v2` would be ambiguous on the wire forever. The property this check exists
         // for is unchanged: no slash, no dot beyond the version separator, so no path to traverse.
         if (preg_match('~^[a-z0-9]+(-[a-z0-9]+)*\.v[0-9]+\z~', $name) !== 1) {
@@ -126,7 +126,7 @@ final class SchemaValidator
         //
         // `maximum` was absent until 1.1.0, which made it a trap rather than an omission: a schema
         // carrying one read as a guarantee and enforced nothing. `minimum` was checked on integers
-        // only, so a negative float — a response time, say — passed a `"minimum": 0` untouched.
+        // only, so a negative float - a response time, say - passed a `"minimum": 0` untouched.
         if (is_int($value) || is_float($value)) {
             if (isset($schema['minimum']) && $value < $schema['minimum']) {
                 $errors[] = "{$path} is below the permitted minimum";

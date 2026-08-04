@@ -61,7 +61,7 @@ MGR1
 ```
 
 Every field that changes the meaning of a request is in there. Alter the method, the path, the
-query, the body or the timing and the signature stops verifying — there is a test per field.
+query, the body or the timing and the signature stops verifying - there is a test per field.
 
 The canonical path sorts query parameters, so a proxy that reorders them cannot break verification,
 and an attacker cannot tamper with them either.
@@ -74,7 +74,7 @@ a payload that failed an earlier one:
 1. Reject bodies over `Protocol::MAX_PAYLOAD_BYTES`, before parsing.
 2. Require every header in `Protocol::requiredRequestHeaders()`.
 3. Reject timestamps outside `Protocol::DEFAULT_TIMESTAMP_TOLERANCE`.
-4. Reject a nonce that has been seen. **If the nonce store is unreachable, reject** — this is the
+4. Reject a nonce that has been seen. **If the nonce store is unreachable, reject** - this is the
    one place where availability loses to correctness.
 5. Look up the site and verify the signature.
 6. Rate-limit by site and by source network.
@@ -88,7 +88,7 @@ TLS is still mandatory. Signing protects integrity and replay; it does nothing f
 
 Responses carrying commands or security-sensitive configuration are signed by the platform over
 `CanonicalResponse`, which **includes the request nonce**. That binding is the point: without it, a
-captured response — say, one granting a capability — could be replayed at the connector against a
+captured response - say, one granting a capability - could be replayed at the connector against a
 later request.
 
 A connector that expects a signed response and does not get a valid one must treat the request as
@@ -119,8 +119,8 @@ Validation errors name the offending path and never quote its value, because tho
 logs and a rejected payload may be carrying exactly the key material that should not be there.
 
 Two limits of the validator worth knowing before writing a schema against it, because both have
-already caught somebody out. It implements **no `minLength` and no `minItems`** — `backup.v1.json`
-carries a `"minLength": 26` that has never enforced anything — so express length as an anchored
+already caught somebody out. It implements **no `minLength` and no `minItems`** - `backup.v1.json`
+carries a `"minLength": 26` that has never enforced anything - so express length as an anchored
 `pattern` with an explicit quantifier. And PCRE's `$` matches *before* a trailing newline, so
 `^[0-9a-f]{64}$` accepts `"…\n"`; anchor with `\z`.
 
@@ -138,7 +138,7 @@ MGRBAK | major | minor | len | manifest | len | signature | ArtifactStream …
 ```
 
 The manifest carries everything needed to decrypt the file **offline, with a private key and nothing
-else** — that is the whole point, because a file that needs our database to describe itself has not
+else** - that is the whole point, because a file that needs our database to describe itself has not
 achieved zero-knowledge. It is signed by the site's own connector key, so whoever holds the file can
 confirm which site produced it without asking the platform, which matters because the platform is the
 party being checked.
@@ -151,7 +151,7 @@ cross-implementation byte-compatibility test in this package, and the change fro
 can obtain the key, not about how bytes are encrypted.
 
 A v3 artifact is **the same file**. The envelope above, the signing prefix, the encryption and the
-chunk size are all identical, and `FORMAT_MAJOR` is still 2 — a reader that opens a v2 artifact opens a
+chunk size are all identical, and `FORMAT_MAJOR` is still 2 - a reader that opens a v2 artifact opens a
 v3 one with no new cryptography. What changed is only what the two documents are permitted to *say*
 about size: `backup.v2` hard-coded a 2 GiB maximum on `artifact_bytes`, `backup-manifest.v2` did the
 same for the dump and the ciphertext, and `backup.v3`/`backup-manifest.v3` carry no maximum at all. How
@@ -160,12 +160,12 @@ can change it and a refusal can name it.
 
 `backup.v3` also requires `artifact_crc32c` beside `artifact_sha256`. Above five gigabytes an artifact
 is assembled from parts, and an object store can only verify a whole-object checksum across such an
-assembly when the algorithm linearises — CRC-32C does, SHA-256 does not. It is a transport check and
+assembly when the algorithm linearises - CRC-32C does, SHA-256 does not. It is a transport check and
 never the integrity one: `artifact_sha256` remains what a customer verifies offline.
 
 ## Fixtures
 
-`fixtures/` holds the cross-implementation contract — known inputs with their expected canonical
+`fixtures/` holds the cross-implementation contract - known inputs with their expected canonical
 strings and signatures, generated from a fixed seed. Both the platform and the connector test
 against these files, so a change that breaks byte-compatibility fails in CI rather than in
 production. See `fixtures/README.md`.
@@ -183,7 +183,7 @@ composer phpstan     # level 8
 
 ## Security
 
-Report vulnerabilities privately to hello@coysh.digital. Do not open a public issue.
+Report vulnerabilities privately to support@managerforcraft.com. Do not open a public issue.
 
 ## Licence
 

@@ -16,7 +16,7 @@ namespace coyshdigital\managerprotocol;
  * configuration.
  *
  * The request nonce is part of the signed material, which binds a response to the single request
- * that asked for it. Without that binding a captured response — say, one granting a capability —
+ * that asked for it. Without that binding a captured response - say, one granting a capability —
  * could be replayed at the connector against a later request.
  */
 final class CanonicalResponse

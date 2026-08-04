@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/updates.v1.json",
     "title": "updates.v1",
-    "description": "Update availability, as computed on the site. An allowlist: anything absent is rejected, not ignored. Note what is not here — no release notes, no changelog bodies, no download URLs. The platform needs to know that an update exists and whether it is a security release; it does not need the contents.",
+    "description": "Update availability, as computed on the site. An allowlist: anything absent is rejected, not ignored. Note what is not here - no release notes, no changelog bodies, no download URLs. The platform needs to know that an update exists and whether it is a security release; it does not need the contents.",
     "type": "object",
     "additionalProperties": false,
     "required": ["schema_version", "checked_at", "craft", "plugins"],

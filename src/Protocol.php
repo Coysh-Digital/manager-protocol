@@ -52,7 +52,7 @@ final class Protocol
     /**
      * @var int The artifact ceiling a platform adopts when its operator has not chosen one, in bytes.
      *
-     * A backup does not travel as a payload — it is streamed, on its own route, and the ordinary
+     * A backup does not travel as a payload - it is streamed, on its own route, and the ordinary
      * payload cap would refuse it before it started. This is the separate ceiling for that route.
      *
      * A default, not a limit, and the distinction is the whole of what changed in 1.5.0. The number
@@ -60,7 +60,7 @@ final class Protocol
      * being anybody's decision: an operator could not raise it, and a hosted edition that owns and
      * bills for the storage could not lift it. It refused live backups for four nights on a site
      * whose database had simply grown. `backup.v3` carries no maximum, so the ceiling is now
-     * wherever the platform configures it — and a platform that configures nothing lands here, which
+     * wherever the platform configures it - and a platform that configures nothing lands here, which
      * is the right place for a self-hosted installation writing to a disk its own operator owns.
      *
      * Still a policy statement rather than a technical one. An artifact larger than this is a site
@@ -80,7 +80,7 @@ final class Protocol
     /**
      * @var int Largest artifact an object store will accept in a single request, in bytes.
      *
-     * Not a protocol decision — this is S3's documented limit for one PUT, and every store worth
+     * Not a protocol decision - this is S3's documented limit for one PUT, and every store worth
      * pointing at has adopted the same number. It lives here because both sides need to agree on
      * when an upload changes shape: below it one request carries the file, above it the file is
      * assembled from parts and the whole-object checksum has to be one that linearises.
@@ -181,7 +181,7 @@ final class Protocol
      * that declaration, and the platform authenticates the request before reading a single byte of
      * the body. The body is then hashed as it streams and rejected if it disagrees.
      *
-     * This is the same canonical string as any other request — the body-hash field simply comes from
+     * This is the same canonical string as any other request - the body-hash field simply comes from
      * the header rather than from a body already in memory.
      */
     public const HEADER_CONTENT_SHA256 = 'Manager-Content-Sha256';

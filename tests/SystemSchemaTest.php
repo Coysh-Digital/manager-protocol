@@ -8,7 +8,7 @@ use coyshdigital\managerprotocol\SchemaValidator;
  * The runtime schema is where "measure the disk" has to stop short of "read the disk".
  *
  * A byte count says how much is there. A file name says what. The gap between those two is the whole
- * boundary this schema defends, and it is easy to cross by accident — the obvious implementation of
+ * boundary this schema defends, and it is easy to cross by accident - the obvious implementation of
  * "show me my largest volumes" wants to list the largest files in them, and the obvious
  * implementation of "why is this site slow" wants to name the slow URLs. Both would be useful. Both
  * are somebody else's content and somebody else's visitors.
@@ -82,7 +82,7 @@ it('refuses a volume handle that could smuggle a path', function (): void {
 
 it('is valid with nothing but the core fields', function (): void {
     // Every section is optional. A site whose volumes are all remote, with no opcache and too little
-    // traffic to sample, sends almost nothing — and that is a valid report rather than a deficient
+    // traffic to sample, sends almost nothing - and that is a valid report rather than a deficient
     // one.
     expect(SchemaValidator::forSchema('system.v1')->validate([
         'schema_version' => 'system.v1',
@@ -140,7 +140,7 @@ it('keeps location to the two values a screen can act on', function (): void {
 it('distinguishes the three reasons a volume goes unmeasured', function (): void {
     /*
      * The whole point of the version. v1 said `measured: false` for remote storage, for a walk that
-     * ran out of its time budget, and for a path that could not be opened — three situations
+     * ran out of its time budget, and for a path that could not be opened - three situations
      * wanting three different responses: nothing, a larger budget, and someone fixing a
      * misconfiguration.
      */
@@ -183,8 +183,8 @@ it('lets a timed-out walk report the bytes it did reach', function (): void {
 });
 
 it('still accepts a v2 report from a site that can say neither', function (): void {
-    // Both fields are optional. A connector that cannot tell — an adapter shape it does not
-    // recognise — omits them rather than guessing, and the platform shows what v1 showed.
+    // Both fields are optional. A connector that cannot tell - an adapter shape it does not
+    // recognise - omits them rather than guessing, and the platform shows what v1 showed.
     expect(SchemaValidator::forSchema('system.v2')->validate([
         'schema_version' => 'system.v2',
         'collected_at' => 1785400000,

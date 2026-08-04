@@ -9,7 +9,7 @@ use coyshdigital\managerprotocol\Protocol;
  *
  * This test exists because the connector's two drifted: its constant went to 1.2.0 while composer.json
  * stayed at 1.1.0, so Packagist saw a tag disagreeing with the manifest and published nothing. Nothing
- * failed loudly — the package simply had no versions.
+ * failed loudly - the package simply had no versions.
  *
  * Invariant 17 asks for verifiable release artifacts. A release carrying two different version numbers
  * is not verifiable, so this is checked rather than remembered.
