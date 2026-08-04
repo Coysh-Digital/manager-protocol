@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/system.v2.json",
     "title": "system.v2",
-    "description": "system.v1 plus two facts about each volume: whether its files are on the server's own disk, and — when it could not be measured — which of the several different reasons applied.\n\nv1 conflated them. `measured: false` meant remote storage, or a tree too large for the time budget, or a path that could not be read, and a screen showing that had no way to tell somebody which. The three want different responses: nothing, a larger budget, and a broken configuration.\n\nBoth additions are categories, not identifiers. v1's `handle` description says \"not its path, and not its filesystem type\", and the second half of that is what changes here — deliberately, and only as far as a closed two-value enum. `local` or `remote` says where the bytes live and therefore whether they can count towards the server's disk. It does not name a provider, a bucket, a region, an endpoint, an adapter class or a path, and it must never be widened to do so: those identify a customer's infrastructure, where this only says which of two shapes it has.",
+    "description": "system.v1 plus two facts about each volume: whether its files are on the server's own disk, and - when it could not be measured - which of the several different reasons applied.\n\nv1 conflated them. `measured: false` meant remote storage, or a tree too large for the time budget, or a path that could not be read, and a screen showing that had no way to tell somebody which. The three want different responses: nothing, a larger budget, and a broken configuration.\n\nBoth additions are categories, not identifiers. v1's `handle` description says \"not its path, and not its filesystem type\", and the second half of that is what changes here - deliberately, and only as far as a closed two-value enum. `local` or `remote` says where the bytes live and therefore whether they can count towards the server's disk. It does not name a provider, a bucket, a region, an endpoint, an adapter class or a path, and it must never be widened to do so: those identify a customer's infrastructure, where this only says which of two shapes it has.",
     "type": "object",
     "additionalProperties": false,
     "required": ["schema_version", "collected_at"],
@@ -42,12 +42,12 @@
                                 "type": "boolean"
                             },
                             "location": {
-                                "description": "Where this volume's files are. `local` means the server's own filesystem, so the bytes count towards its disk; `remote` means an object store or anything else reached over the network, so they do not and the disk figures elsewhere in this report say nothing about them. Two values on purpose — see this schema's description for why it is not the adapter's name.",
+                                "description": "Where this volume's files are. `local` means the server's own filesystem, so the bytes count towards its disk; `remote` means an object store or anything else reached over the network, so they do not and the disk figures elsewhere in this report say nothing about them. Two values on purpose - see this schema's description for why it is not the adapter's name.",
                                 "type": "string",
                                 "enum": ["local", "remote"]
                             },
                             "unmeasured_reason": {
-                                "description": "Why `measured` is false. `remote` — the files are not on this server and walking them would mean an API call per directory, billed to the site, to satisfy a dashboard. `timeout` — the walk started and ran out of the connector's storageWalkSeconds budget, so `bytes` and `files` are a floor rather than a total. `unreadable` — the path resolved to nothing this process could open, which is a configuration fault worth someone looking at. Absent when `measured` is true.",
+                                "description": "Why `measured` is false. `remote` - the files are not on this server and walking them would mean an API call per directory, billed to the site, to satisfy a dashboard. `timeout` - the walk started and ran out of the connector's storageWalkSeconds budget, so `bytes` and `files` are a floor rather than a total. `unreadable` - the path resolved to nothing this process could open, which is a configuration fault worth someone looking at. Absent when `measured` is true.",
                                 "type": "string",
                                 "enum": ["remote", "timeout", "unreadable"]
                             }
@@ -93,7 +93,7 @@
         },
 
         "response": {
-            "description": "How long the site took to build its own responses, sampled on the site from traffic that was happening anyway. This is server processing time — the connector cannot see network, TLS or queueing — so it is not time to first byte and the interface does not call it that.",
+            "description": "How long the site took to build its own responses, sampled on the site from traffic that was happening anyway. This is server processing time - the connector cannot see network, TLS or queueing - so it is not time to first byte and the interface does not call it that.",
             "type": "object",
             "additionalProperties": false,
             "properties": {

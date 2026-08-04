@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/backup-manifest.v3.json",
     "title": "backup-manifest.v3",
-    "description": "The self-describing header of a v3 artifact. Everything needed to decrypt the file offline — with a private key and the file, and nothing else — is here: which scheme, which chunk size, which stream header, and one wrapped copy of the data-encryption key per recovery key that was active when the backup was taken. Nothing here describes the data inside the backup. A person holding only this document learns that a database of a certain size was taken from a certain site at a certain time, and which keys can open it. They learn nothing about what is in it. The only difference from backup-manifest.v2 is that plaintext_bytes and ciphertext_bytes carry no maximum. The envelope is unchanged and so is the signing prefix, so a reader that understands v2 needs no new cryptography to read v3 — only permission to believe a larger number.",
+    "description": "The self-describing header of a v3 artifact. Everything needed to decrypt the file offline - with a private key and the file, and nothing else - is here: which scheme, which chunk size, which stream header, and one wrapped copy of the data-encryption key per recovery key that was active when the backup was taken. Nothing here describes the data inside the backup. A person holding only this document learns that a database of a certain size was taken from a certain site at a certain time, and which keys can open it. They learn nothing about what is in it. The only difference from backup-manifest.v2 is that plaintext_bytes and ciphertext_bytes carry no maximum. The envelope is unchanged and so is the signing prefix, so a reader that understands v2 needs no new cryptography to read v3 - only permission to believe a larger number.",
     "type": "object",
     "additionalProperties": false,
     "required": [
@@ -54,7 +54,7 @@
             "required": ["scheme", "chunk_bytes", "stream_header"],
             "properties": {
                 "scheme": {
-                    "description": "Enumerated rather than free text. A different scheme is a different manifest version, not a different value in this one — that is what stops a reader guessing at bytes it does not understand.",
+                    "description": "Enumerated rather than free text. A different scheme is a different manifest version, not a different value in this one - that is what stops a reader guessing at bytes it does not understand.",
                     "type": "string",
                     "enum": ["xchacha20poly1305-secretstream-v1"]
                 },
@@ -81,7 +81,7 @@
                     "enum": ["x25519-crypto_box_seal-v1"]
                 },
                 "recipients": {
-                    "description": "One entry per recovery key that was active when this backup was taken. Bounded, because every entry is another copy of the key that opens this file. At least one entry is required — that is checked in code, not here, because this validator implements no minItems and a schema that appeared to promise one would be lying.",
+                    "description": "One entry per recovery key that was active when this backup was taken. Bounded, because every entry is another copy of the key that opens this file. At least one entry is required - that is checked in code, not here, because this validator implements no minItems and a schema that appeared to promise one would be lying.",
                     "type": "array",
                     "maxItems": 8,
                     "items": {
@@ -125,7 +125,7 @@
                     "pattern": "^[0-9a-f]{64}\\z"
                 },
                 "ciphertext_sha256": {
-                    "description": "SHA-256 of the encrypted stream only — its header and chunks — not of the whole file. The whole-file hash lives in the declaration, where the transport needs it.",
+                    "description": "SHA-256 of the encrypted stream only - its header and chunks - not of the whole file. The whole-file hash lives in the declaration, where the transport needs it.",
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}\\z"
                 },
@@ -135,7 +135,7 @@
                     "minimum": 1
                 },
                 "ciphertext_bytes": {
-                    "description": "Size of the encrypted stream — header and chunks — which is the whole artifact less the envelope and manifest. No ceiling, as above.",
+                    "description": "Size of the encrypted stream - header and chunks - which is the whole artifact less the envelope and manifest. No ceiling, as above.",
                     "type": "integer",
                     "minimum": 1
                 }

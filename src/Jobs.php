@@ -16,7 +16,7 @@ namespace coyshdigital\managerprotocol;
  *
  * Job types are a **closed set**, declared here so that neither side can invent one. The platform
  * refuses to enqueue a type it does not know; the connector refuses to execute one. Both refusals
- * matter — the platform's stops a mistake, the connector's stops a compromised platform.
+ * matter - the platform's stops a mistake, the connector's stops a compromised platform.
  *
  * What is deliberately absent is the whole point. There is no `console.run`, no `php.eval`, no
  * `sql.query`, no `file.read`, no `http.request` and no `shell.exec`. A job is a named operation
@@ -40,7 +40,7 @@ final class Jobs
      * Takes no parameters. That is not an oversight and it is worth understanding why, because the
      * obvious design is to hand the connector somewhere to upload to.
      *
-     * A parameter naming a destination would mean a platform — or anyone who had compromised one —
+     * A parameter naming a destination would mean a platform - or anyone who had compromised one —
      * could tell a site to send its entire database somewhere else. The connector instead uploads to
      * the platform it is already paired with, over a signed request, to an address it holds locally
      * and that no payload can change. There is nothing in the job for a forged instruction to occupy.

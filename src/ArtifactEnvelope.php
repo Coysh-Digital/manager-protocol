@@ -19,7 +19,7 @@ use SensitiveParameter;
  * A v1 artifact was a bare {@see ArtifactStream}: bytes that meant nothing without the platform's
  * database row beside them. That was acceptable while the platform held the key. It is not acceptable
  * now, because the whole point of sealing an artifact to a customer's own recovery key is that the
- * customer can open it *without us* — and a file that needs our database to describe itself has not
+ * customer can open it *without us* - and a file that needs our database to describe itself has not
  * achieved that.
  *
  * So a v2 artifact carries its own manifest:
@@ -31,7 +31,7 @@ use SensitiveParameter;
  * 6       1      format major
  * 7       1      format minor
  * 8       4      manifest length, uint32 big-endian
- * 12      N      manifest, UTF-8 JSON — the exact bytes that were signed
+ * 12      N      manifest, UTF-8 JSON - the exact bytes that were signed
  * 12+N    2      signature length, uint16 big-endian
  * 14+N    S      raw Ed25519 signature by the site's connector key
  * 14+N+S  ...    ArtifactStream output, byte for byte unchanged
@@ -48,7 +48,7 @@ use SensitiveParameter;
  *    contain braces is how a parser becomes an attack surface.
  *
  *  - **The manifest is bytes, not an object.** It is serialised once, by the connector, and everything
- *    afterwards carries those exact bytes — into this file, and into the declaration the platform
+ *    afterwards carries those exact bytes - into this file, and into the declaration the platform
  *    validates. Nothing re-serialises it. Re-encoding JSON and expecting a signature to survive is the
  *    canonicalisation trap that breaks verification a year later, on a different PHP minor, over a
  *    difference in how a float or a slash was rendered.

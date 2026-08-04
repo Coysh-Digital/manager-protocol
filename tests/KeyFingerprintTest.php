@@ -13,7 +13,7 @@ use coyshdigital\managerprotocol\Sealing;
  * Everything about zero-knowledge backups rests on a customer being able to confirm that the key a
  * site is about to seal a database to is the key they hold. They do that by comparing a string in a
  * file on their laptop against a string in a configuration file on their server. So the properties
- * that matter here are not cryptographic subtleties — they are whether two renderings of the same key
+ * that matter here are not cryptographic subtleties - they are whether two renderings of the same key
  * always look the same, whether two different keys never do, and whether a human who retypes one
  * slightly differently still gets a match.
  */
@@ -54,7 +54,7 @@ it('never uses a letter that can be misread as a digit', function (): void {
 
 it('gives a recovery key and a site key different fingerprints even from the same bytes', function (): void {
     // Both are 32-byte public keys, so without domain separation the same bytes read as an X25519 key
-    // and as an Ed25519 key would fingerprint identically — and a customer comparing one against the
+    // and as an Ed25519 key would fingerprint identically - and a customer comparing one against the
     // other would see a match that means nothing.
     $bytes = base64_encode(str_repeat("\x2a", 32));
 

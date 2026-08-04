@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://protocol.coysh.digital/updates.v2.json",
     "title": "updates.v2",
-    "description": "Update availability, as computed on the site. v1 with one addition: a plugin may carry the release notes for the versions between the one it is running and the one it could run. Still an allowlist — anything absent is rejected, not ignored, and there is still no download URL and no licence key. The notes are the text a plugin already publishes to the Craft Plugin Store, and the site already holds them; forwarding them saves the platform from having to ask a third party what every plugin in a fleet is called. What makes that safe is what the receiver does with them: notes are stored against a plugin and a version, never against a site, so a database learns 'this version fixed that' rather than 'that site is exposed to this'. A receiver that stores them per site has reintroduced exactly the problem v1 refused, and no schema can stop it.",
+    "description": "Update availability, as computed on the site. v1 with one addition: a plugin may carry the release notes for the versions between the one it is running and the one it could run. Still an allowlist - anything absent is rejected, not ignored, and there is still no download URL and no licence key. The notes are the text a plugin already publishes to the Craft Plugin Store, and the site already holds them; forwarding them saves the platform from having to ask a third party what every plugin in a fleet is called. What makes that safe is what the receiver does with them: notes are stored against a plugin and a version, never against a site, so a database learns 'this version fixed that' rather than 'that site is exposed to this'. A receiver that stores them per site has reintroduced exactly the problem v1 refused, and no schema can stop it.",
     "type": "object",
     "additionalProperties": false,
     "required": ["schema_version", "checked_at", "craft", "plugins"],
@@ -55,7 +55,7 @@
                         "type": "boolean"
                     },
                     "releases": {
-                        "description": "The versions between current and latest, newest first. Sent only for a plugin that has an update available — there is nothing to describe otherwise. These bounds are an outer limit rather than a budget: a sender is expected to stop well short of them, because 250 plugins each carrying ten full release notes is a request nobody wants to receive.",
+                        "description": "The versions between current and latest, newest first. Sent only for a plugin that has an update available - there is nothing to describe otherwise. These bounds are an outer limit rather than a budget: a sender is expected to stop well short of them, because 250 plugins each carrying ten full release notes is a request nobody wants to receive.",
                         "type": "array",
                         "maxItems": 10,
                         "items": {

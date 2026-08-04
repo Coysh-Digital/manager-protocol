@@ -30,7 +30,7 @@ namespace coyshdigital\managerprotocol;
  *
  *  - **Fifteen bytes, not sixteen or twenty.** 120 bits is exactly 24 Crockford base32 characters,
  *    which is exactly six groups of four with no ragged final group. The property being relied on is
- *    second preimage resistance — finding a *different* public key with this fingerprint — at 2^120.
+ *    second preimage resistance - finding a *different* public key with this fingerprint - at 2^120.
  *    Collision resistance, at 2^60, is not what protects anything here: a fingerprint is only ever
  *    compared against one the customer already holds.
  *
@@ -96,7 +96,7 @@ final class KeyFingerprint
         if ($raw === false || strlen($raw) !== Sealing::BOX_PUBLIC_KEY_BYTES) {
             // The value is never quoted back. A malformed key is usually a paste error, and echoing
             // it into a log or an exception is how key material ends up somewhere it was not meant
-            // to be — even a public one, which still identifies an organisation.
+            // to be - even a public one, which still identifies an organisation.
             throw new ProtocolException('Not a well-formed recovery public key.');
         }
 
@@ -138,7 +138,7 @@ final class KeyFingerprint
      * Render arbitrary digest bytes in the shared prefix-and-groups form.
      *
      * Public so that {@see RecoveryProof} produces something that looks and behaves exactly like a
-     * fingerprint — same length, same alphabet, same normalisation, same tolerance for how somebody
+     * fingerprint - same length, same alphabet, same normalisation, same tolerance for how somebody
      * retyped it. A customer completing a proof-of-possession ceremony is copying a short code between
      * a terminal and a browser, which is the same task as comparing a fingerprint, and it should not
      * come with a second set of rules.
@@ -158,7 +158,7 @@ final class KeyFingerprint
      * Put a fingerprint somebody typed into canonical form.
      *
      * Crockford's decoding rules, which exist for exactly this situation: I and L both mean 1, O means
-     * 0, case is irrelevant, and separators are decoration. U is not accepted — it is excluded from
+     * 0, case is irrelevant, and separators are decoration. U is not accepted - it is excluded from
      * the alphabet rather than aliased, so a U is a genuine mistake rather than a near miss.
      *
      * The result is not guaranteed to be well formed; ask {@see self::isWellFormed()} about that. This
@@ -191,8 +191,8 @@ final class KeyFingerprint
     /**
      * Whether two fingerprints name the same key, allowing for how they were typed.
      *
-     * Constant time over the normalised forms. The comparison is not secret — a fingerprint is public
-     * — but this is the check that decides whether a site will seal a database to a key, and a
+     * Constant time over the normalised forms. The comparison is not secret - a fingerprint is public
+     * - but this is the check that decides whether a site will seal a database to a key, and a
      * comparison that returns early is a habit worth not having in that position.
      */
     public static function matches(string $a, string $b): bool

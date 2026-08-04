@@ -14,8 +14,8 @@ namespace coyshdigital\managerprotocol;
 /**
  * Which capability governs which part of an inventory report.
  *
- * Without this, `inventory:read` alone would carry everything — licence state, configuration flags,
- * queue depth — and the other read capabilities would be decorative. Granting `security:read` has to
+ * Without this, `inventory:read` alone would carry everything - licence state, configuration flags,
+ * queue depth - and the other read capabilities would be decorative. Granting `security:read` has to
  * change what a site actually sends, or the interface is describing a permission that does nothing.
  *
  * The connector omits sections it has not been granted. The platform's schema marks those sections
@@ -53,7 +53,7 @@ final class InventorySections
             // Licence state, computed on the site. Never licence keys.
             'licences:read' => ['licence'],
 
-            // Safe configuration booleans — dev mode, whether HTTPS is enforced. Separate because
+            // Safe configuration booleans - dev mode, whether HTTPS is enforced. Separate because
             // these are the facts a finding is derived from, and an operator may reasonably want the
             // version inventory without them.
             'security:read' => ['config_flags'],
@@ -100,7 +100,7 @@ final class InventorySections
      * Strip anything the given capabilities do not cover.
      *
      * Used by the connector before sending. The platform validates the result against the schema and
-     * would accept the fuller payload too — this is the site declining to send what it was not asked
+     * would accept the fuller payload too - this is the site declining to send what it was not asked
      * for, which is the right place for that decision.
      *
      * @param  array<string, mixed>  $payload

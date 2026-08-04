@@ -11,7 +11,7 @@ use coyshdigital\managerprotocol\Sealing;
  * Artifact encryption, tested as a format rather than as a function.
  *
  * These run on both sides of the wire and years apart, so what is asserted here is that a stream one
- * build writes is one a later build reads back byte for byte — and, just as importantly, that the
+ * build writes is one a later build reads back byte for byte - and, just as importantly, that the
  * ways an artifact can be wrong are all detected rather than any of them being read as a shorter
  * backup.
  */
@@ -148,7 +148,7 @@ it('produces a different ciphertext every time for identical input', function ()
     $a = ArtifactStream::encrypt(memoryStream($plaintext), $first, $key);
     $b = ArtifactStream::encrypt(memoryStream($plaintext), $second, $key);
 
-    // Same key, same input, different bytes — the header carries a fresh nonce. Two nightly backups
+    // Same key, same input, different bytes - the header carries a fresh nonce. Two nightly backups
     // of an unchanged database must not be visibly identical in storage.
     expect(streamContents($first))->not->toBe(streamContents($second))
         ->and($a['ciphertext_sha256'])->not->toBe($b['ciphertext_sha256'])
@@ -207,7 +207,7 @@ it('refuses a public key that would produce a box anybody could open', function 
     // Small-order Curve25519 points. Sealing to one produces a shared secret an attacker can predict,
     // so the box is readable by anyone who finds it.
     //
-    // This is not the control that prevents the attack — libsodium already refuses, which the second
+    // This is not the control that prevents the attack - libsodium already refuses, which the second
     // expectation asserts rather than assumes. What this buys is *when*: a recovery key entered by hand
     // is refused next to the field it was typed into, instead of at three in the morning on the night a
     // site has already dumped its database to disk and cannot seal the artifact key.

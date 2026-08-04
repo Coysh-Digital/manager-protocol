@@ -15,7 +15,7 @@ use coyshdigital\managerprotocol\SchemaValidator;
  *
  * What must not be in either: anything the platform could use to open a backup, and anything that
  * describes what is inside one. v1 already refused credentials, connection strings, table names and
- * content samples. v2 refuses one more thing — a key the platform could use — and the absence of
+ * content samples. v2 refuses one more thing - a key the platform could use - and the absence of
  * `sealed_key` from this schema is the whole difference between the two formats.
  */
 it('accepts a realistic v2 declaration', function (): void {
@@ -103,7 +103,7 @@ it('rejects a job id that is not a ulid', function (string $value): void {
     $declaration['job_id'] = $value;
 
     // v1 expressed this as minLength/maxLength, and this validator implements neither minLength nor
-    // any length floor — so `backup.v1.json` has always carried a constraint that enforced nothing.
+    // any length floor - so `backup.v1.json` has always carried a constraint that enforced nothing.
     // v2 says it as a pattern, which this validator does implement.
     expect(SchemaValidator::forSchema('backup.v2')->validate($declaration))->not->toBe([]);
 })->with([
@@ -259,7 +259,7 @@ it('does not pretend to enforce a minimum recipient count', function (): void {
     $manifest['key_wrapping']['recipients'] = [];
 
     // This validator implements no minItems, so an empty list passes the schema. That is not an
-    // oversight to be papered over here — it is why "at least one recipient" is a check in the
+    // oversight to be papered over here - it is why "at least one recipient" is a check in the
     // platform and the connector, and why the schema description says so out loud. A schema that
     // appeared to guarantee it would be the same trap as v1's unenforced minLength.
     expect(SchemaValidator::forSchema('backup-manifest.v2')->validate($manifest))->toBe([]);

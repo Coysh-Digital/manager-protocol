@@ -12,7 +12,7 @@ use coyshdigital\managerprotocol\SchemaValidator;
  * unpatched vulnerability on a named host.
  *
  * v2 accepts them, and the reasoning has not been abandoned so much as located properly. The danger
- * was never the text — it is public, the plugin store serves it to anyone — it was the *association*
+ * was never the text - it is public, the plugin store serves it to anyone - it was the *association*
  * between that text and a named site, and a schema cannot express where a receiver puts what it is
  * given. So v2 carries the notes and the receiver is required to store them against a plugin and a
  * version rather than against a site. The tests that hold that end of the bargain live in the

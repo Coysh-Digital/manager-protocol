@@ -36,7 +36,7 @@ use SensitiveParameter;
  *    verify it without ever storing anything that would let somebody else answer, and a response
  *    intercepted in transit reveals nothing about the challenge it came from.
  *
- *  - **The response looks exactly like a fingerprint** — same prefix-and-groups shape, same Crockford
+ *  - **The response looks exactly like a fingerprint** - same prefix-and-groups shape, same Crockford
  *    alphabet, same tolerance for how it was retyped. Copying a short code from a terminal into a
  *    browser is the same task as comparing a fingerprint, and it should not come with a second set of
  *    rules to learn.

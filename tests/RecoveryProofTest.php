@@ -10,7 +10,7 @@ use coyshdigital\managerprotocol\Sealing;
 /**
  * The ceremony that stops an unusable recovery key being enrolled.
  *
- * Almost nothing can be checked about a submitted X25519 public key — any 32 bytes is a valid one — so
+ * Almost nothing can be checked about a submitted X25519 public key - any 32 bytes is a valid one - so
  * the only meaningful test is whether somebody can demonstrate they hold the other half. The value is
  * less cryptographic than procedural: enrolling a key becomes a restore rehearsal.
  */
