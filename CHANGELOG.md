@@ -4,6 +4,28 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and - more
 usefully - what was deliberately left out of it.
 
+## 1.7.1 - 2026-08-06
+
+Nothing on the wire moved. No schema, no canonical string, no signing behaviour, no fixture - a
+`1.7.0` platform and a `1.7.0` connector are unaffected by taking this, and there is nothing to
+coordinate.
+
+### Advisories are scanned on a schedule, not only when somebody opens a pull request
+
+`composer audit --locked` already ran on every pull request. The schedule is what was missing, and
+for a package that changes as rarely as this one that is the whole gap: an advisory is published when
+it is published, and a library nobody has needed to touch for a month was a month behind on knowing.
+
+Its own workflow rather than a `schedule:` on `ci.yml`, so it fails for exactly one reason. GitHub
+emails the repository owner when a scheduled run fails, which is the alerting mechanism;
+`workflow_dispatch` is there to run it by hand while investigating rather than waiting for Monday.
+
+No lockfile is committed here, this being a library, so `composer install` resolves fresh and the
+audit reads the newest versions the constraints admit rather than a snapshot from whenever a file was
+last touched.
+
+Actions are pinned to commits. `ci.yml` still uses moving tags and is worth correcting separately.
+
 ## 1.7.0
 
 `SchemaValidator` refused nothing at all when handed an empty JSON object. No schema changed; what
