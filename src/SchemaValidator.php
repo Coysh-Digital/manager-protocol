@@ -137,12 +137,30 @@ final class SchemaValidator
             }
         }
 
-        if (is_array($value) && array_is_list($value)) {
-            $this->checkArray($value, $schema, $path, $errors);
-        }
+        // Which branch an array takes is decided by the schema first and by PHP's shape second.
+        //
+        // `json_decode('{}', true)` returns `[]`, and `array_is_list([])` is true, so dispatching on
+        // shape alone sent an empty JSON object to checkArray() - which returns immediately when the
+        // schema declares no `items`. checkObject() holds `required` and `additionalProperties`, so
+        // neither ran, and `{}` validated against every published schema no matter how many fields
+        // it declared required. matchesType() already made exactly this exception one screen down
+        // ("object" accepts `$value === []`); this is the same exception, applied to the dispatch it
+        // was missing from.
+        //
+        // The tests never caught it because they empty an object by unsetting one key at a time and
+        // never all of them at once.
+        //
+        // A schema with no declared `type` keeps the old behaviour, so nothing that validates today
+        // starts failing: only a node the schema explicitly calls an object changes branch, and only
+        // when it arrived empty.
+        if (is_array($value)) {
+            $declaredObject = ($schema['type'] ?? null) === 'object';
 
-        if (is_array($value) && !array_is_list($value)) {
-            $this->checkObject($value, $schema, $path, $errors);
+            if (!$declaredObject && array_is_list($value)) {
+                $this->checkArray($value, $schema, $path, $errors);
+            } else {
+                $this->checkObject($value, $schema, $path, $errors);
+            }
         }
     }
 

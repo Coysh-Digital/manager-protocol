@@ -4,6 +4,52 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and - more
 usefully - what was deliberately left out of it.
 
+## 1.7.0
+
+`SchemaValidator` refused nothing at all when handed an empty JSON object. No schema changed; what
+changed is that the schemas are now enforced in a case where they silently were not.
+
+### What was wrong
+
+`{}` validated against every published schema, however many fields that schema declared `required`.
+Confirmed against `inventory.v1`, `system.v2`, `updates.v2`, `logins.v1` and `backup.v3`: all five
+returned no errors at all.
+
+`json_decode('{}', true)` returns `[]`, and `array_is_list([])` is `true`, so `check()` dispatched an
+empty object to `checkArray()` - which returns immediately when the schema declares no `items`.
+`checkObject()` holds both `required` and `additionalProperties`, and was never reached. `matchesType()`
+already carried the exception (`'object'` accepts `$value === []`), so the type gate passed first and
+the payload sailed through everything after it.
+
+It reached production because the suite empties an object by unsetting one key at a time. Every test
+payload therefore had at least one key left in it, and the fully-empty case was never constructed in
+368 tests.
+
+The effect downstream was not a lenient accept but a worse error: a payload the validator was supposed
+to refuse by name instead reached code that indexed a key which was not there. An inventory report of
+`{}` returned a 500 with a correlation id rather than a 422 naming the missing field; a manifest whose
+`encryption` block had been emptied passed both the declaration schema and the manifest signature check
+before dying on an undefined key.
+
+### What changed
+
+- **Dispatch is decided by the schema first and by PHP's shape second.** A node the schema declares as
+  `type: object` goes to `checkObject()` even when it arrives empty. Everything else is unchanged: a
+  node with no declared `type` keeps the old behaviour, and an empty array against `type: array` is
+  still a list.
+- **`tests/SchemaValidatorTest.php`** covers the validator's own behaviour rather than any one schema's
+  rules - every published schema refuses `{}`, a nested empty object is refused, an empty list is still
+  a list, and every valid fixture still validates unchanged.
+
+### What was deliberately left out
+
+No schema file was touched and no fixture was regenerated. This is a validator that was not applying
+the rules already published, so the rules did not need to change - and a fixture that stopped
+verifying would have meant a wire-format break, which this is not.
+
+Nothing was relaxed to accommodate existing callers. A connector sending `{}` was already broken; it
+now learns so with a 422 that names the fields instead of a 500 that names nothing.
+
 ## 1.6.0
 
 `system.v2`. A volume now says where its files are, and - when it could not be measured - which of
