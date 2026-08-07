@@ -4,6 +4,68 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and - more
 usefully - what was deliberately left out of it.
 
+## 1.8.0 - 2026-08-07
+
+Add-only. No existing schema, canonical string, signature or fixture moved, so a 1.7.1 platform and a
+1.7.1 connector are unaffected by taking this. What it adds is unused until both sides are updated.
+
+### A canonical string for the platform asking a site to check in
+
+Everywhere else in this protocol the connector calls out and the platform answers. `CanonicalNudge` is
+the first thing pointing the other way: the platform knocks, and the site decides what to do about it.
+
+It exists because of a wait nobody could shorten from the platform side. A backup requested in Manager
+is a queued row and nothing more - the site collects it on its next claim, which is up to five minutes
+away with cron and, on a site whose scheduler runs off ordinary web traffic, however long it takes for
+somebody to visit. The screen is correct for that whole time and looks broken.
+
+**The nudge carries no instruction, and that is the entire design.** Four lines:
+
+```
+MGR1-NUDGE
+{siteId}
+{timestamp}
+{nonce}
+```
+
+There is no field for a job type, a command, a capability, a path or a destination, so a site that
+receives one does exactly what it would have done on its own a few minutes later: make an ordinary
+signed claim and find out for itself what is waiting. Everything that decides anything - whether a
+capability is still granted, which recipients an artifact may be sealed to, where an upload may go - is
+downstream of that claim and untouched by this. The worst a forged, replayed or misdirected nudge can
+achieve is an early poll.
+
+A second kind of nudge would need a second prefix, which is a change to this package and a moved
+fixture. The vocabulary is held to one word by the wire format rather than by a comment asking nicely.
+
+### Why a third prefix rather than reusing the response one
+
+One key signs claim responses and nudges both, so the prefixes are the only thing keeping their
+canonical strings from colliding. `MGR1-NUDGE` is domain separation, for the same reason `MGR1` and
+`MGR1-RESPONSE` are distinct, and there is now a test asserting a signed response cannot be presented
+as a nudge or the reverse - rather than trusting two constants to stay different by inspection.
+
+### What was left out, and why
+
+- **The request path.** A Craft action URL varies with `actionTrigger`, `headlessMode`,
+  `omitScriptNameInUrls` and whether the install sits in a subfolder, and anything in front of it may
+  rewrite what arrives. Signing a path would fail on sites behaving perfectly, in exchange for no
+  authority: `siteId` already says which installation the nudge is for, and the endpoint does one thing.
+- **A body hash.** There is no body. A canonical string with nowhere to put one is a stronger guarantee
+  than hashing an empty string, because a body cannot be smuggled in later without changing this
+  package.
+- **A connector version.** `Protocol::nudgeHeaders()` names four headers, not five - a nudge travels
+  platform to site, so there is no connector version to report. `requiredRequestHeaders()` is
+  deliberately untouched: it describes connector requests, and widening it to cover both directions
+  would leave one list fitting neither.
+- **A separate signing key.** The platform's existing Ed25519 key, already pinned by every connector at
+  pairing. A nudge grants nothing a claim response does not, so a second key would be another thing to
+  rotate and protect for no reduction in what a stolen one could do.
+
+Replay protection is the receiver's job and is not specified here beyond providing the timestamp and
+nonce to do it with: `DEFAULT_TIMESTAMP_TOLERANCE` bounds how long a captured nudge stays useful, and
+the nonce is what a site claims to refuse the second delivery of the same one.
+
 ## 1.7.1 - 2026-08-06
 
 Nothing on the wire moved. No schema, no canonical string, no signing behaviour, no fixture - a

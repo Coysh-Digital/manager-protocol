@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use coyshdigital\managerprotocol\CanonicalNudge;
 use coyshdigital\managerprotocol\CanonicalRequest;
 use coyshdigital\managerprotocol\CanonicalResponse;
 use coyshdigital\managerprotocol\Keys;
 use coyshdigital\managerprotocol\Nonce;
+use coyshdigital\managerprotocol\Protocol;
 
 /**
  * The canonical string and the signatures over it are the contract between two separately
@@ -96,6 +98,86 @@ it('binds a response signature to the request nonce', function (): void {
     );
 
     expect($replayed->verify($f['signature'], $fixture['platform_keypair']['public']))->toBeFalse();
+});
+
+it('reproduces and verifies the canonical nudge string', function (): void {
+    $fixture = fixture('signing.json');
+    $f = $fixture['nudge'];
+
+    $nudge = new CanonicalNudge(
+        $fixture['request']['site_id'],
+        $fixture['request']['timestamp'],
+        $fixture['request']['nonce'],
+    );
+
+    expect($nudge->toString())->toBe($f['canonical_string'])
+        ->and($nudge->verify($f['signature'], $fixture['platform_keypair']['public']))->toBeTrue();
+});
+
+it('rejects a nudge signature once any signed field changes', function (string $field): void {
+    $fixture = fixture('signing.json');
+
+    $values = [
+        'site_id' => $fixture['request']['site_id'],
+        'timestamp' => $fixture['request']['timestamp'],
+        'nonce' => $fixture['request']['nonce'],
+    ];
+
+    $values[$field] = $field === 'timestamp' ? $values[$field] + 1 : $values[$field] . 'x';
+
+    $tampered = new CanonicalNudge(...array_values($values));
+
+    expect($tampered->verify($fixture['nudge']['signature'], $fixture['platform_keypair']['public']))
+        ->toBeFalse();
+})->with(['site_id', 'timestamp', 'nonce']);
+
+it('does not let a signed response stand in for a nudge, or the reverse', function (): void {
+    $fixture = fixture('signing.json');
+
+    // One key signs both. The prefixes are the only thing keeping the two canonical strings from
+    // colliding, so this asserts the separation rather than trusting the constants to stay distinct.
+    $nudge = new CanonicalNudge(
+        $fixture['request']['site_id'],
+        $fixture['request']['timestamp'],
+        $fixture['request']['nonce'],
+    );
+
+    $response = new CanonicalResponse(
+        $fixture['request']['site_id'],
+        $fixture['request']['nonce'],
+        $fixture['response']['status'],
+        $fixture['response']['body'],
+    );
+
+    $public = $fixture['platform_keypair']['public'];
+
+    expect($nudge->verify($fixture['response']['signature'], $public))->toBeFalse()
+        ->and($response->verify($fixture['nudge']['signature'], $public))->toBeFalse()
+        ->and($nudge->toString())->not->toBe($response->toString());
+});
+
+it('asks a nudge to carry nothing but who, when and once', function (): void {
+    // Four lines, and the first is a constant. A nudge that grew a field for a job type, a path or a
+    // capability would be a nudge that could carry an instruction, which is the one thing this
+    // canonical form exists to make impossible.
+    $nudge = new CanonicalNudge('01JRZX9K2Q4M8N7P6T5V3W2Y1B', 1785340000, Nonce::generate());
+
+    expect(explode("\n", $nudge->toString()))->toHaveCount(4)
+        ->and((new ReflectionClass(CanonicalNudge::class))->getConstructor()?->getNumberOfParameters())
+        ->toBe(3);
+});
+
+it('names four headers for a nudge and leaves the request list alone', function (): void {
+    expect(Protocol::nudgeHeaders())->toBe([
+        Protocol::HEADER_SITE,
+        Protocol::HEADER_TIMESTAMP,
+        Protocol::HEADER_NONCE,
+        Protocol::HEADER_SIGNATURE,
+    ])
+        // A nudge travels the other way, so there is no connector version to report - and widening
+        // the connector's list to cover this direction is the mistake this asserts against.
+        ->and(Protocol::nudgeHeaders())->not->toContain(Protocol::HEADER_CONNECTOR_VERSION)
+        ->and(Protocol::requiredRequestHeaders())->toContain(Protocol::HEADER_CONNECTOR_VERSION);
 });
 
 it('round-trips a freshly generated keypair', function (): void {

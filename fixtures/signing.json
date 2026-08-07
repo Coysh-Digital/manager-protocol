@@ -22,6 +22,11 @@
         "canonical_string": "MGR1-RESPONSE\n01JRZX9K2Q4M8N7P6T5V3W2Y1B\nZm9vYmFyYmF6cXV4MTIzNA\n200\n4062edaf750fb8074e7e83e0c9028c94e32468a8b6f1614774328ef045150f93",
         "signature": "6OU9FBwX4E4lxu/O27syw+Yg2sJ8ZYSPb2KaWMfnhOjjodkKyLyYW6wWzZFixnsjUkZ4WANEAzXatRBarQ4DCQ=="
     },
+    "nudge": {
+        "note": "Deliberately the same site, timestamp and nonce as the request above, so the prefix is visibly the only thing keeping the two canonical strings apart.",
+        "canonical_string": "MGR1-NUDGE\n01JRZX9K2Q4M8N7P6T5V3W2Y1B\n1785340000\nZm9vYmFyYmF6cXV4MTIzNA",
+        "signature": "IY/xPnwvPYgDvl2Ff5RW8Sa6xP+gctsJUV4cqR6FYj+Vb3onFY2HQdte4xUmWN6e4xE2vxEvfZnutncfuPjgAQ=="
+    },
     "canonical_path_cases": [
         {
             "path": "/api/connector/v1/inventory",

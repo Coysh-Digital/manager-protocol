@@ -22,7 +22,7 @@ final class Protocol
     /**
      * @var string Package version. Independent of the platform and connector versions.
      */
-    public const VERSION = '1.7.1';
+    public const VERSION = '1.8.0';
 
     /**
      * @var string Prefix on the canonical string a connector signs.
@@ -33,6 +33,18 @@ final class Protocol
      * @var string Prefix on the canonical string the platform signs.
      */
     public const RESPONSE_PREFIX = 'MGR1-RESPONSE';
+
+    /**
+     * @var string Prefix on the canonical string the platform signs when it asks a site to check in.
+     *
+     * A third prefix rather than a reuse of {@see self::RESPONSE_PREFIX}, and the reason is the reason
+     * the first two are distinct: the same key signs both, so without domain separation a signature
+     * captured in one setting could be presented in the other. The prefixes are what stop a signed
+     * response from being replayable as a nudge.
+     *
+     * See {@see CanonicalNudge} for why a nudge carries no instruction.
+     */
+    public const NUDGE_PREFIX = 'MGR1-NUDGE';
 
     /**
      * @var int Seconds either side of the platform clock that a request timestamp may fall.
@@ -203,6 +215,29 @@ final class Protocol
             self::HEADER_TIMESTAMP,
             self::HEADER_NONCE,
             self::HEADER_CONNECTOR_VERSION,
+            self::HEADER_SIGNATURE,
+        ];
+    }
+
+    /**
+     * All headers a signed nudge must carry.
+     *
+     * Four, and shorter than {@see self::requiredRequestHeaders()} by exactly the header that has no
+     * meaning here: a nudge travels platform to site, so there is no connector version to report. That
+     * list describes connector requests and must not be widened to cover this one - two directions
+     * with different rules are clearer than one list that fits neither.
+     *
+     * No `Manager-Content-Sha256`, because a nudge has no body. A nudge arriving with one is refused
+     * before its signature is even checked.
+     *
+     * @return list<string>
+     */
+    public static function nudgeHeaders(): array
+    {
+        return [
+            self::HEADER_SITE,
+            self::HEADER_TIMESTAMP,
+            self::HEADER_NONCE,
             self::HEADER_SIGNATURE,
         ];
     }
