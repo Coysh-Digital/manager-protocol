@@ -4,6 +4,23 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and - more
 usefully - what was deliberately left out of it.
 
+## 1.8.1 - 2026-08-09
+
+No wire change. No schema, canonical string, signature or fixture moved, so this is interchangeable
+with 1.8.0 on either side of the protocol.
+
+### Build
+
+- **CI pins its actions to commits rather than to tags.** `actions/checkout@v4` and
+  `shivammathur/setup-php@v2` are moving references - whoever controls those repositories can point
+  them at different code without the tag changing. This package is the signing contract two other
+  packages resolve against, so the job that decides whether a change to it is sound is a job worth
+  knowing the contents of. `platform` and `manager-restore` already pin these same two commits; this
+  brings the last one into line.
+
+  The run reaches little - `contents: read`, no secrets beyond `GITHUB_TOKEN`, no
+  `pull_request_target`, nothing published - which bounds it rather than excusing it.
+
 ## 1.8.0 - 2026-08-07
 
 Add-only. No existing schema, canonical string, signature or fixture moved, so a 1.7.1 platform and a
