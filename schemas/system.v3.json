@@ -1,0 +1,188 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://protocol.coysh.digital/system.v3.json",
+    "title": "system.v3",
+    "description": "system.v2 plus what the site can say about its own Craft install that nothing outside it can observe: how much deprecated code is still running, how large the database is, whether the directories Craft writes to are writable, whether a security key is set, whether the control panel is still at the default address, and which of Craft's required PHP extensions are absent.\n\nEvery addition is a count, a boolean or a member of a closed set, and each one was chosen over a more useful shape for the same reason v2's `location` is two values rather than an adapter name.\n\n`security_key_set` is presence, never the key. `cp_trigger_default` says whether the trigger equals Craft's published default and never what it actually is - a site that moved its control panel moved it to somewhere it would rather not have written down in somebody else's dashboard, and reporting the new address would undo the thing it did. `paths` names Craft's own directories from a fixed list, so a site cannot report a filesystem path by choosing a label. `missing_extensions` is drawn from an enum of Craft's published requirements, so it can only ever say which of a public, fixed list is absent - the count in `extensions` stays exactly as it was, because the full list of what is loaded fingerprints the host and this does not.\n\nWhat is deliberately not here: response compression. It is a property of what the server sends a visitor, it is decided at the edge, and a site behind a CDN would report its origin's answer rather than the one anybody receives. It is observed from outside instead.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["schema_version", "collected_at"],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": ["system.v3"]
+        },
+        "collected_at": {
+            "description": "Unix timestamp at which the connector gathered this data.",
+            "type": "integer"
+        },
+
+        "storage": {
+            "description": "Sizes of the volumes Craft manages. Labels are a closed set, so a site cannot name a directory here and thereby report a path.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "volumes": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["handle", "bytes"],
+                        "properties": {
+                            "handle": {
+                                "description": "The asset volume's handle. Not its path.",
+                                "type": "string",
+                                "maxLength": 128,
+                                "pattern": "^[A-Za-z0-9._-]+$"
+                            },
+                            "bytes": { "type": "integer", "minimum": 0 },
+                            "files": { "type": "integer", "minimum": 0 },
+                            "measured": {
+                                "description": "False when the volume could not be walked. A size of zero and a size nobody could measure are different facts, and `unmeasured_reason` says which of the several causes applied.",
+                                "type": "boolean"
+                            },
+                            "location": {
+                                "description": "Where this volume's files are. `local` means the server's own filesystem, so the bytes count towards its disk; `remote` means an object store or anything else reached over the network, so they do not and the disk figures elsewhere in this report say nothing about them. Two values on purpose - see system.v2's description for why it is not the adapter's name.",
+                                "type": "string",
+                                "enum": ["local", "remote"]
+                            },
+                            "unmeasured_reason": {
+                                "description": "Why `measured` is false. `remote` - the files are not on this server and walking them would mean an API call per directory, billed to the site, to satisfy a dashboard. `timeout` - the walk started and ran out of the connector's storageWalkSeconds budget, so `bytes` and `files` are a floor rather than a total. `unreadable` - the path resolved to nothing this process could open, which is a configuration fault worth someone looking at. Absent when `measured` is true.",
+                                "type": "string",
+                                "enum": ["remote", "timeout", "unreadable"]
+                            }
+                        }
+                    }
+                },
+
+                "storage_bytes": {
+                    "description": "Craft's own storage directory: logs, caches, compiled templates, backups it has taken itself.",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "disk_free_bytes": { "type": "integer", "minimum": 0 },
+                "disk_total_bytes": { "type": "integer", "minimum": 0 }
+            }
+        },
+
+        "php": {
+            "description": "Runtime limits, as numbers. Never phpinfo(), never a path, never an ini file, and never the value of any setting that could name one.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "version": { "type": "string", "maxLength": 32 },
+                "sapi": { "type": "string", "maxLength": 32 },
+                "memory_limit_bytes": {
+                    "description": "-1 where the limit is unlimited, which is a real setting and not an error.",
+                    "type": "integer",
+                    "minimum": -1
+                },
+                "max_execution_time": { "type": "integer", "minimum": 0 },
+                "upload_max_filesize_bytes": { "type": "integer", "minimum": 0 },
+                "post_max_size_bytes": { "type": "integer", "minimum": 0 },
+                "max_input_vars": { "type": "integer", "minimum": 0 },
+                "opcache_enabled": { "type": "boolean" },
+                "opcache_memory_used_bytes": { "type": "integer", "minimum": 0 },
+                "opcache_memory_free_bytes": { "type": "integer", "minimum": 0 },
+                "extensions": {
+                    "description": "Count only. The list itself would fingerprint the host in a way a byte count does not, and `missing_extensions` does not change that - it answers a closed question about a public list rather than describing what is installed.",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "missing_extensions": {
+                    "description": "Which of Craft's required extensions are not loaded. A closed enum rather than free strings, so this cannot become the inventory of loaded extensions that `extensions` deliberately refuses to be. An empty array and an absent field mean different things: empty is a site that checked and found none missing, absent is a connector that did not look.\n\nThe imaging extensions are not in the list. Craft needs one of two rather than both, so \"missing\" is the wrong question about them and `image_driver` answers the right one.",
+                    "type": "array",
+                    "maxItems": 14,
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "ctype",
+                            "curl",
+                            "dom",
+                            "fileinfo",
+                            "iconv",
+                            "intl",
+                            "json",
+                            "mbstring",
+                            "openssl",
+                            "pcre",
+                            "pdo",
+                            "reflection",
+                            "spl",
+                            "zip"
+                        ]
+                    }
+                },
+                "image_driver": {
+                    "description": "Which imaging library Craft has available. `none` is a real answer and a serious one - a site in that state cannot generate a transform. Three values, and never a version string: the version belongs to the host, and what a reader can act on is which of the two libraries is in play.",
+                    "type": "string",
+                    "enum": ["gd", "imagick", "none"]
+                }
+            }
+        },
+
+        "craft": {
+            "description": "Facts about the Craft install that only the site can see. Counts and booleans; no setting's value appears here.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "deprecation_count": {
+                    "description": "How many distinct deprecation warnings Craft has recorded. The count, never the messages - a deprecation warning names a template, a file and a line, and those are the site's code.",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "session_rows": {
+                    "description": "Rows in Craft's sessions table. A number nobody looks at until it is in the millions, which is what an install that has never run garbage collection looks like. No session, no token and no user id travels with it.",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "security_key_set": {
+                    "description": "Whether a security key is configured. Presence, never the key. False means every token, session and encrypted value on the site is built on nothing, which is worth a platform saying out loud.",
+                    "type": "boolean"
+                },
+                "cp_trigger_default": {
+                    "description": "Whether the control panel is still reachable at Craft's default trigger. True means it is. False means somebody moved it, and this schema does not say where - see this schema's description for why reporting the new address would undo the change it is reporting.",
+                    "type": "boolean"
+                }
+            }
+        },
+
+        "database": {
+            "description": "How large the database is. A size, never a table listing and never a row count per table: the first is what decides whether a backup finishes, and the second starts describing the shape of somebody's content.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "size_bytes": {
+                    "description": "Total size including indexes, as the engine reports it. Approximate on MySQL and MariaDB, which is fine for the question it answers - a backup that has grown from 200 MB to 9 GB is a different backup, and nobody needs the exact byte to see that.",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+
+        "paths": {
+            "description": "Whether the directories Craft has to write to are writable. A fixed set of Craft's own directory names, so a site cannot report a filesystem path by choosing a label - which is the same reason a volume sends a handle rather than a path. Absent for a connector that did not look; a directory absent from a present object is one it could not determine.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "storage": { "type": "boolean" },
+                "cpresources": { "type": "boolean" },
+                "config_project": { "type": "boolean" }
+            }
+        },
+
+        "response": {
+            "description": "How long the site took to build its own responses, sampled on the site from traffic that was happening anyway. This is server processing time - the connector cannot see network, TLS or queueing - so it is not time to first byte and the interface does not call it that.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "samples": { "type": "integer", "minimum": 0 },
+                "window_hours": { "type": "integer", "minimum": 1, "maximum": 168 },
+                "mean_ms": { "type": "number", "minimum": 0 },
+                "p50_ms": { "type": "number", "minimum": 0 },
+                "p95_ms": { "type": "number", "minimum": 0 },
+                "max_ms": { "type": "number", "minimum": 0 }
+            }
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "schema_version": "system.v3",
+    "collected_at": 1785400000,
+    "php": {
+        "version": "8.3.14",
+        "extensions": 47,
+        "loaded": ["core", "curl", "ioncube_loader", "newrelic"],
+        "missing_extensions": ["intl", "ioncube_loader"],
+        "image_driver": "imagick 3.7.0",
+        "ini_path": "/etc/php/8.3/fpm/php.ini"
+    },
+    "craft": {
+        "deprecation_count": 12,
+        "security_key_set": true,
+        "security_key": "vFq3mZ8pR2wK7nT4xL9dB6sG1hJ5cY0a",
+        "cp_trigger_default": false,
+        "cp_trigger": "acme-secret-panel",
+        "messages": [
+            "templates/_layouts/base.twig line 42: craft.request is deprecated",
+            "modules/acme/src/Payroll.php line 118: getUser() is deprecated"
+        ]
+    },
+    "database": {
+        "size_bytes": 21390950,
+        "name": "acme_production",
+        "tables": [
+            { "name": "acme_payroll", "rows": 4102 },
+            { "name": "users", "rows": 918 }
+        ]
+    },
+    "paths": {
+        "storage": true,
+        "path": "/var/www/vhosts/example.org/storage",
+        "web_root": "/var/www/vhosts/example.org/web"
+    }
+}
