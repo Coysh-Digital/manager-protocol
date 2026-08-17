@@ -4,6 +4,52 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and - more
 usefully - what was deliberately left out of it.
 
+## 1.9.0 - 2026-08-17
+
+A runtime report that can describe the Craft install, not just the disk it sits on.
+
+`system.v1` and `system.v2` are untouched. A connector sending either keeps working against any
+platform that accepted it before, and a platform that has not been upgraded keeps receiving exactly
+what it received - the connector picks the newest version both sides know, so neither has to move
+first.
+
+### Added
+
+- **`system.v3`.** Everything `system.v2` carries, plus four sections a site can answer about itself
+  and nothing outside it can observe:
+  - `craft` - the number of distinct deprecation warnings Craft has recorded, the row count of its
+    sessions table, whether a security key is configured, and whether the control panel is still at
+    the default trigger.
+  - `database.size_bytes` - the total including indexes. This is the number that decides whether a
+    backup finishes, and until now the report described every asset volume and the disk underneath
+    them while saying nothing about the thing being backed up.
+  - `paths` - whether Craft's `storage`, `cpresources` and project-config directories are writable.
+  - `php.missing_extensions` and `php.image_driver` - which of Craft's required extensions are
+    absent, and which imaging library is available.
+
+### What was left out of it, and why
+
+Every one of these has a more useful shape that this schema refuses.
+
+- **A deprecation warning without its message is harder to act on.** The message names a template, a
+  file and a line, and those are the site's own code. The count says whether there is a problem;
+  finding it is done on the site, where the code already is.
+- **A database size without a table breakdown is harder to act on.** A per-table row count describes
+  the shape of somebody's content, and a table *name* often describes their business. The total
+  answers the question a backup asks.
+- **`cp_trigger_default` is a boolean, and there is no field for the trigger itself.** A site that
+  moved its control panel moved it somewhere it would rather not have written down; reporting the
+  new address in somebody else's dashboard would undo the change being reported.
+- **`security_key_set` is presence, never the key.**
+- **`missing_extensions` is a closed enum of Craft's published requirements**, so it cannot become
+  the inventory of loaded extensions that `php.extensions` deliberately reduces to a count. `paths`
+  is a fixed set of Craft's own directory names for the same reason a volume sends a handle rather
+  than a path: a free-form label is a filesystem path with extra steps.
+- **`image_driver` is which library, never which version.** The version belongs to the host.
+- **Response compression is not here at all.** It is decided at the edge, so a site behind a CDN
+  would report its origin's answer rather than the one a visitor receives. It is observed from
+  outside instead.
+
 ## 1.8.1 - 2026-08-09
 
 No wire change. No schema, canonical string, signature or fixture moved, so this is interchangeable

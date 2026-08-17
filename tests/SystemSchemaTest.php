@@ -202,3 +202,112 @@ it('will not accept a v1 report under the v2 name, or the reverse', function ():
 
     expect(SchemaValidator::forSchema('system.v1')->validate($v2))->not->toBe([]);
 });
+
+/*
+ | system.v3.
+ |
+ | v1 and v2 are untouched, so every combination of connector and platform that worked before still
+ | works and nothing has to be upgraded in step.
+ |
+ | What v3 adds is the first set of facts in this schema that a site could answer *usefully* by
+ | sending something identifying. A deprecation warning is only actionable if you know which template
+ | raised it; a database size is only actionable if you know which table grew; a moved control panel
+ | is only findable if you know where it moved to. In every one of those cases the useful answer is
+ | the site's code, the shape of its content, or a secret it moved on purpose - so v3 sends the
+ | count, the total and the boolean, and these tests are the reason it keeps doing so.
+ */
+it('accepts a v3 report describing the Craft install', function (): void {
+    expect(SchemaValidator::forSchema('system.v3')->validate(fixture('system.v3/valid.json')))
+        ->toBe([]);
+});
+
+it('refuses the identifying half of every fact v3 added', function (): void {
+    $joined = implode(' ', SchemaValidator::forSchema('system.v3')->validate(fixture('system.v3/forbidden-content.json')));
+
+    // The security key beside the boolean that says one is set, the trigger beside the boolean that
+    // says it moved, the deprecation messages beside their count, the table list beside the total
+    // size, a path beside the writability it describes, and the loaded-extension list beside the
+    // count that exists precisely so the list does not have to travel.
+    expect($joined)->toContain('.security_key is')
+        ->and($joined)->toContain('.cp_trigger is')
+        ->and($joined)->toContain('.messages is')
+        ->and($joined)->toContain('.tables is')
+        ->and($joined)->toContain('.name is')
+        ->and($joined)->toContain('.path is')
+        ->and($joined)->toContain('.web_root is')
+        ->and($joined)->toContain('.loaded is')
+        ->and($joined)->toContain('.ini_path is');
+});
+
+it('never echoes a rejected v3 value either', function (): void {
+    $joined = implode(' ', SchemaValidator::forSchema('system.v3')->validate(fixture('system.v3/forbidden-content.json')));
+
+    expect($joined)->not->toContain('vFq3mZ8pR2wK7nT4xL9dB6sG1hJ5cY0a')
+        ->and($joined)->not->toContain('acme-secret-panel')
+        ->and($joined)->not->toContain('acme_production')
+        ->and($joined)->not->toContain('Payroll.php')
+        ->and($joined)->not->toContain('/var/www');
+});
+
+it('keeps missing_extensions to Craft\'s published requirements', function (): void {
+    /*
+     * The field that would most easily become the thing `extensions` refuses to be. Free strings
+     * here and a connector could report every loaded extension by calling them all "missing" — so
+     * the values are an enum, and anything outside it is refused rather than trimmed.
+     */
+    $payload = fixture('system.v3/valid.json');
+    $payload['php']['missing_extensions'] = ['ioncube_loader'];
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($payload))->not->toBe([]);
+});
+
+it('keeps the image driver to which library, not which version', function (): void {
+    // A version string belongs to the host. What a reader acts on is whether transforms can happen
+    // at all, and that has three answers.
+    $payload = fixture('system.v3/valid.json');
+    $payload['php']['image_driver'] = 'imagick 3.7.0';
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($payload))->not->toBe([]);
+});
+
+it('keeps writable directories to the ones Craft owns', function (): void {
+    // A free-form label here is a filesystem path with extra steps: "/var/www/html/storage": true
+    // reports a path while looking like it reports a permission.
+    $payload = fixture('system.v3/valid.json');
+    $payload['paths']['/var/www/vhosts/example.org/storage'] = true;
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($payload))->not->toBe([]);
+});
+
+it('tells an empty missing_extensions apart from an absent one', function (): void {
+    // A site that checked and found nothing missing, and a connector too old to have looked, are
+    // different facts. Both are valid; only one of them means the extensions are fine.
+    $checked = fixture('system.v3/valid.json');
+    $checked['php']['missing_extensions'] = [];
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($checked))->toBe([]);
+
+    $neverLooked = fixture('system.v3/valid.json');
+    unset($neverLooked['php']['missing_extensions']);
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($neverLooked))->toBe([]);
+});
+
+it('is valid with nothing but the core fields, as v1 and v2 are', function (): void {
+    // Every section stays optional. A connector that can build a v3 report but whose Craft could not
+    // answer any of the new questions sends a shorter report, not a deficient one.
+    expect(SchemaValidator::forSchema('system.v3')->validate([
+        'schema_version' => 'system.v3',
+        'collected_at' => 1785400000,
+    ]))->toBe([]);
+});
+
+it('will not accept a v2 report under the v3 name, or the reverse', function (): void {
+    $v2 = fixture('system.v2/valid.json');
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($v2))->not->toBe([]);
+
+    $v3 = fixture('system.v3/valid.json');
+
+    expect(SchemaValidator::forSchema('system.v2')->validate($v3))->not->toBe([]);
+});
