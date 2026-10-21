@@ -311,3 +311,189 @@ it('will not accept a v2 report under the v3 name, or the reverse', function ():
 
     expect(SchemaValidator::forSchema('system.v2')->validate($v3))->not->toBe([]);
 });
+
+/*
+ | system.v4.
+ |
+ | v1 to v3 are untouched. What v4 adds is a single declared value, and the question worth a test is
+ | whether it stays one. A file that says which Node version a project wants is also a file that holds
+ | a path, a registry address or a token when somebody puts one there, and the temptation on the
+ | connector side is to send whatever was read - so the schema refuses anything that is not shaped
+ | like a version, and refuses the more informative answers (what is installed, what the manifest
+ | says besides) by name.
+ */
+it('accepts a v4 report declaring the Node.js version', function (): void {
+    expect(SchemaValidator::forSchema('system.v4')->validate(fixture('system.v4/valid.json')))
+        ->toBe([]);
+});
+
+it('refuses the more informative half of every fact v4 added', function (): void {
+    $joined = implode(' ', SchemaValidator::forSchema('system.v4')->validate(fixture('system.v4/forbidden-content.json')));
+
+    // A path where the version goes, a path where the file name goes, a path beside them, the
+    // version that is actually running, the rest of the engines block and the contents of a
+    // registry configuration.
+    expect($joined)->toContain('.declared does not match the permitted format')
+        ->and($joined)->toContain('.source is not one of the permitted values')
+        ->and($joined)->toContain('.path is not a permitted field')
+        ->and($joined)->toContain('.running is not a permitted field')
+        ->and($joined)->toContain('.engines is not a permitted field')
+        ->and($joined)->toContain('.contents is not a permitted field');
+});
+
+it('never echoes a rejected v4 value either', function (): void {
+    $joined = implode(' ', SchemaValidator::forSchema('system.v4')->validate(fixture('system.v4/forbidden-content.json')));
+
+    expect($joined)->not->toContain('/var/www')
+        ->and($joined)->not->toContain('example.org')
+        ->and($joined)->not->toContain('_authToken')
+        ->and($joined)->not->toContain('private-registry');
+});
+
+it('accepts the shapes a Node version or range is written in', function (string $declared): void {
+    $payload = fixture('system.v4/valid.json');
+    $payload['node']['declared'] = $declared;
+
+    expect(SchemaValidator::forSchema('system.v4')->validate($payload))->toBe([]);
+})->with([
+    'major' => '20',
+    'prefixed' => 'v20.11.0',
+    'wildcard' => '20.x',
+    'range' => '>=18.17 <21',
+    'alternatives' => '^18 || ^20',
+    'tilde' => '~20.11.0',
+    'prerelease' => '22.0.0-rc.1+build.5',
+    'latest lts' => 'lts/*',
+    'named lts' => 'lts/iron',
+    'alias' => 'node',
+]);
+
+it('refuses a declared value that could carry a path, a url or a sentence', function (string $declared): void {
+    $payload = fixture('system.v4/valid.json');
+    $payload['node']['declared'] = $declared;
+
+    expect(SchemaValidator::forSchema('system.v4')->validate($payload))->not->toBe([]);
+})->with([
+    'absolute path' => '/var/www/html/.nvmrc',
+    'relative path' => '../../etc/passwd',
+    'windows path' => 'C:\\sites\\acme',
+    'url' => 'https://npm.example.org',
+    'lts alias with a path' => 'lts/../../etc',
+    'sentence' => 'whatever the client uses, ask Dave',
+    'shell' => '20; rm -rf /',
+    'interpolation' => '$NODE_VERSION',
+    'empty' => '',
+    'newline' => "20\n/var/www",
+]);
+
+it('caps declared at thirty-two characters', function (): void {
+    $payload = fixture('system.v4/valid.json');
+
+    $payload['node']['declared'] = str_repeat('2', 32);
+    expect(SchemaValidator::forSchema('system.v4')->validate($payload))->toBe([]);
+
+    $payload['node']['declared'] = str_repeat('2', 33);
+    expect(implode(' ', SchemaValidator::forSchema('system.v4')->validate($payload)))
+        ->toContain('node.declared exceeds its maximum length');
+});
+
+it('refuses a declared value that is not a string', function (): void {
+    // The type is ["string", "null"], and a list of types that matched anything would be worse than
+    // having no type at all.
+    foreach ([20, 20.5, true, ['20'], ['node' => '20']] as $declared) {
+        $payload = fixture('system.v4/valid.json');
+        $payload['node']['declared'] = $declared;
+
+        expect(SchemaValidator::forSchema('system.v4')->validate($payload))->not->toBe([]);
+    }
+});
+
+it('keeps source to the three files a version is read from', function (): void {
+    foreach (['.nvmrc', '.node-version', 'package.json'] as $source) {
+        $payload = fixture('system.v4/valid.json');
+        $payload['node']['source'] = $source;
+
+        expect(SchemaValidator::forSchema('system.v4')->validate($payload))->toBe([]);
+    }
+
+    // The tempting extras: a path to the file, the lockfile beside it, the registry configuration
+    // that can hold a token.
+    foreach (['/var/www/html/.nvmrc', 'package-lock.json', '.npmrc', 'nvmrc', ''] as $source) {
+        $payload = fixture('system.v4/valid.json');
+        $payload['node']['source'] = $source;
+
+        expect(SchemaValidator::forSchema('system.v4')->validate($payload))->not->toBe([]);
+    }
+});
+
+it('refuses an unknown key inside node', function (): void {
+    $payload = fixture('system.v4/valid.json');
+    $payload['node']['npm'] = '>=9';
+
+    expect(implode(' ', SchemaValidator::forSchema('system.v4')->validate($payload)))
+        ->toContain('node.npm is not a permitted field');
+});
+
+it('tells a site that declares nothing apart from a connector that did not look', function (): void {
+    // Both members null is an answer: the connector read the project, and nothing there names a
+    // version. No `node` at all is the absence of an answer - an older connector, or one that could
+    // not read the project - and v4 refuses it, so the platform never has to guess which it is
+    // looking at.
+    $declaresNothing = fixture('system.v4/valid.json');
+    $declaresNothing['node'] = ['declared' => null, 'source' => null];
+
+    expect(SchemaValidator::forSchema('system.v4')->validate($declaresNothing))->toBe([]);
+
+    $neverLooked = fixture('system.v4/valid.json');
+    unset($neverLooked['node']);
+
+    expect(implode(' ', SchemaValidator::forSchema('system.v4')->validate($neverLooked)))
+        ->toContain('$.node is required');
+});
+
+it('requires both members of node to be present, even when null', function (): void {
+    foreach (['declared', 'source'] as $member) {
+        $payload = fixture('system.v4/valid.json');
+        unset($payload['node'][$member]);
+
+        expect(implode(' ', SchemaValidator::forSchema('system.v4')->validate($payload)))
+            ->toContain("\$.node.{$member} is required");
+    }
+});
+
+it('refuses node as anything but an object', function (): void {
+    foreach ([null, '20', ['20'], 20] as $node) {
+        $payload = fixture('system.v4/valid.json');
+        $payload['node'] = $node;
+
+        expect(SchemaValidator::forSchema('system.v4')->validate($payload))->not->toBe([]);
+    }
+});
+
+it('is valid with node and the core fields, as v1 to v3 are with the core alone', function (): void {
+    expect(SchemaValidator::forSchema('system.v4')->validate([
+        'schema_version' => 'system.v4',
+        'collected_at' => 1785400000,
+        'node' => ['declared' => null, 'source' => null],
+    ]))->toBe([]);
+});
+
+it('will not accept a v3 report under the v4 name, or the reverse', function (): void {
+    $v3 = fixture('system.v3/valid.json');
+
+    expect(SchemaValidator::forSchema('system.v4')->validate($v3))->not->toBe([]);
+
+    $v4 = fixture('system.v4/valid.json');
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($v4))->not->toBe([]);
+});
+
+it('leaves system.v3 exactly as it was', function (): void {
+    // Add-only means a v3 connector is still a valid v3 connector. The tempting way to break that
+    // is to make `node` optional on v3 "for consistency"; this is the test that says no.
+    $v3 = fixture('system.v3/valid.json');
+    $v3['node'] = ['declared' => '20', 'source' => '.nvmrc'];
+
+    expect(SchemaValidator::forSchema('system.v3')->validate($v3))->not->toBe([])
+        ->and(SchemaValidator::forSchema('system.v3')->validate(fixture('system.v3/valid.json')))->toBe([]);
+});

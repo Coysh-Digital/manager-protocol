@@ -30,6 +30,7 @@ dataset('schemas with required fields', [
     'inventory.v1' => ['inventory.v1', 'collected_at'],
     'system.v1' => ['system.v1', 'collected_at'],
     'system.v2' => ['system.v2', 'collected_at'],
+    'system.v4' => ['system.v4', 'node'],
     'updates.v1' => ['updates.v1', 'checked_at'],
     'updates.v2' => ['updates.v2', 'checked_at'],
     'logins.v1' => ['logins.v1', 'failed_attempts'],
@@ -88,4 +89,21 @@ it('accepts every valid fixture unchanged', function (): void {
         ->and(SchemaValidator::forSchema('updates.v2')->validate(fixture('updates.v2/valid.json')))->toBe([])
         ->and(SchemaValidator::forSchema('logins.v1')->validate(fixture('logins.v1/valid.json')))->toBe([])
         ->and(SchemaValidator::forSchema('backup-manifest.v3')->validate(fixture('backup-manifest.v3/valid.json')))->toBe([]);
+});
+
+it('reads a list of types as any of them', function (): void {
+    // system.v4 is the first schema to need it. The failure worth guarding is the quiet one: a list
+    // cast to a string is the word "Array", which no type check recognises and therefore waves through,
+    // so a nullable field would have accepted an integer, a boolean or a nested object.
+    $validator = new SchemaValidator([
+        'type' => 'object',
+        'properties' => ['x' => ['type' => ['string', 'null'], 'maxLength' => 3]],
+    ]);
+
+    expect($validator->validate(['x' => 'abc']))->toBe([])
+        ->and($validator->validate(['x' => null]))->toBe([])
+        ->and(implode(' ', $validator->validate(['x' => 5])))->toContain('$.x must be of type string or null')
+        ->and($validator->validate(['x' => true]))->not->toBe([])
+        ->and($validator->validate(['x' => ['a']]))->not->toBe([])
+        ->and(implode(' ', $validator->validate(['x' => 'abcd'])))->toContain('maximum length');
 });

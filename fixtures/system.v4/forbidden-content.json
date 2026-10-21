@@ -1,0 +1,16 @@
+{
+    "schema_version": "system.v4",
+    "collected_at": 1785400000,
+    "node": {
+        "declared": "/var/www/vhosts/example.org/web/.nvmrc",
+        "source": "/var/www/vhosts/example.org/.nvmrc",
+        "path": "/var/www/vhosts/example.org",
+        "running": "v20.11.0",
+        "engines": { "node": ">=18", "npm": ">=9", "private-registry": "https://npm.example.org" },
+        "contents": "//registry.example.org/:_authToken=not-a-real-token"
+    },
+    "php": {
+        "version": "8.3.14",
+        "extensions": 47
+    }
+}
