@@ -4,6 +4,50 @@ This package is the wire contract between the Manager platform and the connector
 A change here is a change to what a site may send, so every entry says what was added and - more
 usefully - what was deliberately left out of it.
 
+## 1.10.0 - 2026-10-21
+
+A runtime report that can say which Node.js version a site's own project files ask for.
+
+`system.v1`, `system.v2` and `system.v3` are untouched. A connector sending any of them keeps working
+against any platform that accepted it before, and a platform that has not been upgraded keeps
+receiving exactly what it received - the connector picks the newest version both sides know, so
+neither has to move first.
+
+### Added
+
+- **`system.v4`.** Everything `system.v3` carries, plus a required `node` object:
+  - `node.declared` - the version or range exactly as a site's `.nvmrc`, `.node-version` or
+    `package.json` `engines.node` writes it, or null. At most 32 characters, drawn from the characters a
+    Node version or range is written in: `20`, `v20.11.0`, `>=18.17 <21`, `^18 || ^20`, `lts/iron`.
+  - `node.source` - which of those three files it came from, or null.
+
+  `node` is required, with nullable members, so the two absences stay distinguishable. A report whose
+  `node` is `{declared: null, source: null}` came from a connector that looked and found nothing
+  declared; a report with no `node` came from one that predates this version. A platform can say
+  "not declared" for the first and nothing for the second, instead of implying that every old site has
+  no Node requirement.
+
+- **`SchemaValidator` accepts `type` as a list.** `["string", "null"]` means either. It was needed for
+  the above, and before this change a list was cast to the word "Array", which no type check
+  recognised - so a schema written that way would have validated any value at all. No published schema
+  used one, so nothing that validated before validates differently.
+
+### What was left out of it, and why
+
+- **The version Node is running is not here.** Observing it means executing a binary on somebody's
+  server, which this protocol does not ask a connector to do, and a site that does not run Node in
+  production would report a toolchain that serves no traffic. `declared` is what a file says, which a
+  connector can read without a shell and which is what a team agreed the site needs.
+- **`declared` is a pattern, not a free string.** A string field that holds "whatever the file said"
+  holds a path, a URL or a sentence the first time somebody writes one into `.nvmrc`. The pattern admits
+  digits, letters and the punctuation of a range, and a slash only inside an `lts/` alias, so a value
+  that does not fit is refused rather than truncated.
+- **`source` is one of three file names, never a path to the file.** The same reason `paths` in
+  `system.v3` is a fixed set of directory names.
+- **Nothing else from `package.json` has a field.** A manifest names the project's dependencies, its
+  scripts and sometimes a private registry; `node.declared` is one value out of it, and the schema has
+  nowhere for a second to go.
+
 ## 1.9.0 - 2026-08-17
 
 A runtime report that can describe the Craft install, not just the disk it sits on.

@@ -34,6 +34,13 @@ The same pattern: `valid.json` is accepted, `forbidden-content.json` is rejected
 file carries is listed in the schema's own description - a dump path and table names for `backup.v1`,
 filesystem paths and visitor addresses for `system.v1`, usernames and source addresses for `logins.v1`.
 
+## `system.v4/`
+
+| File | Expectation |
+|---|---|
+| `valid.json` | Accepted. `system.v3`'s valid report with `node` declaring `>=18.17 <21` from `package.json`. |
+| `forbidden-content.json` | **Rejected.** `node` carries a path as both `declared` and `source`, and beside them the running version, the whole `engines` object and the contents of a registry configuration. Each is a more useful-looking answer than the one the schema allows. |
+
 ## `backup.v3/`, `backup-manifest.v3/`
 
 The same three files each, and one thing worth knowing before reading them.

@@ -18,7 +18,8 @@ namespace coyshdigital\managerprotocol;
  * payload and inside privileged plugin code on customer sites, so the spec asks for its
  * dependencies to be reviewed strictly. The supported subset is deliberately narrow - type, enum,
  * required, properties, additionalProperties, items, minimum, maximum, maxItems, maxLength and
- * pattern.
+ * pattern. `type` may be a list, for the one case the protocol needs it - a field that is a string or
+ * an explicit null, which says "looked, found nothing" where omitting the key says "did not look".
  *
  * The important behaviour is that `additionalProperties: false` **rejects** an unknown key rather
  * than stripping it. Silently dropping unrecognised fields would let a connector widen what it
@@ -107,11 +108,18 @@ final class SchemaValidator
      */
     private function check(mixed $value, array $schema, string $path, array &$errors): void
     {
-        if (isset($schema['type']) && !$this->matchesType($value, (string) $schema['type'])) {
-            $errors[] = "{$path} must be of type {$schema['type']}";
+        if (isset($schema['type'])) {
+            // A list is read as "any of these". Cast to string, it became the word "Array", which
+            // matchesType() does not recognise and therefore accepts: a schema written `["string",
+            // "null"]` would have validated anything at all.
+            $types = array_map('strval', (array) $schema['type']);
 
-            // Later constraints assume the type held, so stop descending here.
-            return;
+            if (!array_filter($types, fn (string $type): bool => $this->matchesType($value, $type))) {
+                $errors[] = "{$path} must be of type " . implode(' or ', $types);
+
+                // Later constraints assume the type held, so stop descending here.
+                return;
+            }
         }
 
         if (isset($schema['enum']) && is_array($schema['enum']) && !in_array($value, $schema['enum'], true)) {
